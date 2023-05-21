@@ -1,0 +1,18 @@
+﻿<Window x:Class="Electric.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Electric"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Grid x:Name="FieldButton">
+        <Image x:Name="graphImage" Margin="97,72,295,114" Width="420" Height="240"/>
+        <Button Content="Field Button" HorizontalAlignment="Left" Margin="604,270,0,0" VerticalAlignment="Top" Click="Button_Click"/>
+        <TextBox x:Name="xVal" HorizontalAlignment="Left" Height="24" Margin="604,105,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="100"/>
+        <TextBox x:Name="yVal" HorizontalAlignment="Left" Height="21" Margin="604,152,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="100"/>
+        <TextBox x:Name="xCrush" HorizontalAlignment="Left" Margin="604,196,0,0" TextWrapping="Wrap" Text="4" VerticalAlignment="Top" Width="120"/>
+        <TextBox x:Name="yCrush" HorizontalAlignment="Left" Margin="604,219,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Top" Width="120"/>
+
+    </Grid>
+</Window>

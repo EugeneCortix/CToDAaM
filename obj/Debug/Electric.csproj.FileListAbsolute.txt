@@ -1,0 +1,16 @@
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\bin\Debug\Electric.exe.config
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\bin\Debug\Electric.exe
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\bin\Debug\Electric.pdb
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.csproj.AssemblyReference.cache
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.csproj.SuggestedBindingRedirects.cache
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\MainWindow.g.cs
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\App.g.cs
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric_MarkupCompile.cache
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric_MarkupCompile.lref
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\MainWindow.baml
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.g.resources
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.Properties.Resources.resources
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.csproj.GenerateResource.cache
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.csproj.CoreCompileInputs.cache
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.exe
+C:\Users\TANYA\Documents\Study\КТМиАД\Electric\Electric\obj\Debug\Electric.pdb

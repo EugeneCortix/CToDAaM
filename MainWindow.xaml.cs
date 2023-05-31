@@ -26,7 +26,9 @@ namespace Electric
         double kz; // Scaling y
         double r;
         double z;
-        int size; // matrix size
+        int sizei; // matrix size
+        int sizej; // matrix size
+        int size; // Global matrix size
         double sigma = 100; // S/m
         List<double[,]> Ml; // M locals
         List<double[,]> Gl; // G locals
@@ -34,9 +36,8 @@ namespace Electric
         double[,] G;
         double[,] A; // Matrix
         double[] b; // 'true' decision vector 
-        double[] qRe; // finite decision vector (Re)
-        double[] qIm; // finite decision vector (Im)
-        string q =""; // finite decision vector 
+        double[] q; // finite decision vector (Re)
+        //string q =""; // finite decision vector 
         image[,] portrait; // Matrix portrait
         DrawingGroup drawingGroup = new DrawingGroup();
         List<Element> elements;
@@ -66,59 +67,89 @@ namespace Electric
             buildlocal();
             buildPortrait();
             // Global M
-            size = 2 + Ml.Count * 2;
-            M = new double[size, size];
-            for (int u = 0; u < Ml.Count; u++)
-            {
-                for (int i = 0; i < 4; i++)
+            size = (sizei + 1) * (sizej + 1);
+            M = new double[size, size]; // Size = number of nodes * number of nodes
+            for (int i = 0; i < sizei; i++)
+                for (int j = 0; j < sizej; j++)
                 {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        M[i + u* 2, j + u * 2] += Ml[u][i, j];
-                    }
+                    // checking portrait and adding
+                    /*for (int k = 0; k < portrait[i, j].els.Count; k++)
+                   {
+                       //M[i, j] += Ml[portrait[i, j].els[k]][portrait[i, j].ig[k], portrait[i, j].jg[k]];
+                   }*/
+                    // Go local Matrix
+                    int num = portrait[i, j].n;
+                    for(int k = 0; k < 4; k++)
+                        for(int l = 0; l < 4; l++)
+                        {
+                            // Global indexes
+                            int ig = portrait[i, j].els[k];
+                            int jg = portrait[i, j].els[l];
+                            M[ig, jg] += Ml[num][k,l];
+                        }
                 }
-            }
 
             // Global G
             G = new double[size, size];
-            for (int u = 0; u < Gl.Count; u++)
-            {
-                for (int i = 0; i < 4; i++)
+            for (int i = 0; i < sizei; i++)
+                for (int j = 0; j < sizej; j++)
                 {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        G[i + u * 2, j + u * 2] += Gl[u][i, j];
-                    }
+                    // Go local Matrix
+                    int num = portrait[i, j].n;
+                    for (int k = 0; k < 4; k++)
+                        for (int l = 0; l < 4; l++)
+                        {
+                            // Global indexes
+                            int ig = portrait[i, j].els[k];
+                            int jg = portrait[i, j].els[l];
+                            G[ig, jg] += Gl[num][k, l];
+                        }
                 }
-            }
 
             // Sum matrixes
             buildA();
             printmat(A, "A");
+            printmat(M, "M");
+            printmat(G, "G");
         }
 
         // Builds A matrix from M & G
         private void buildA()
         {
-            A = new double[size, size];
+            A = new double[size*2, size*2];
+            double[,] Ac= new double[size, size];
+            double[,] As= new double[size, size];
             for (int i = 0; i < size; i++)
                 for (int j = 0;j < size; j++)
-                    A[i,j] = -G[i,j] + M[i,j]*(sigma-1);
+                {
+                    Ac[i, j] = -G[i, j] + M[i, j] * (sigma - 1);
+                    As[i, j] = -G[i, j] - M[i, j] * (sigma + 1);
+                }
+            // Look at Scheme 2
+            for (int i = 0; i < size; i++)
+                for (int j = 0; j < size; j++)
+                {
+                    int i0 = i * 2; 
+                    int j0= j*2;
+                    A[i0, j0]= As[i,j];
+                    A[i0, j0 + 1]= -Ac[i,j];
+                    A[i0 + 1, j0]= Ac[i,j];
+                    A[i0 + 1, j0 + 1]= As[i,j];
+                }
+
+
+
         }
 
         // 'True' decision vector
-        private void buildAphiRe()
+        private void buildAphi()
         {
-            b = new double[size];
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < size*2; i++)
+                if(i%2==0)
                 b[i] = 4; // The simplest case, const
+            else b[i] = 3;
         }
-        private void buildAphiIm()
-        {
-            b = new double[size];
-            for (int i = 0; i < size; i++)
-                b[i] = 4; // The simplest case, const
-        }
+
 
         private void buildlocal() 
         {
@@ -175,23 +206,25 @@ namespace Electric
             Ml = new List <double[,] >();
             foreach (var element in elements)
             {
+                // All coefficient for M
+                double koef = element.sigma - element.lambda * 1/element.r;
                 double[,] Mloc = new double[4, 4];
-                Mloc[0, 0] = element.gamma * Mx[0,0] * My[0,0];
-                Mloc[0, 1] = element.gamma * Mx[0,1] * My[0,0];
-                Mloc[0, 2] = element.gamma * Mx[0,0] * My[0,1];
-                Mloc[0, 3] = element.gamma * Mx[0,1] * My[0,1];
-                Mloc[1, 0] = Mloc[0, 1];
-                Mloc[1, 1] = element.gamma * Mx[1, 1] * My[0, 0];
-                Mloc[1, 2] = element.gamma * Mx[1, 0] * My[0, 1];
-                Mloc[1, 3] = element.gamma * Mx[1, 1] * My[0, 1];
-                Mloc[2, 0] = Mloc[0, 2];
-                Mloc[2, 1] = Mloc[1, 2];
-                Mloc[2, 2] = element.gamma * Mx[0, 0] * My[1, 1];
-                Mloc[2, 3] = element.gamma * Mx[0, 1] * My[1, 1];
-                Mloc[3, 0] = Mloc[0, 3];
-                Mloc[3, 1] = Mloc[1, 3];
-                Mloc[3, 2] = Mloc[2, 3];
-                Mloc[3, 3] = element.gamma * Mx[1, 1] * My[1, 1];
+                Mloc[0, 0] = element.gamma * Mx[0,0] * My[0,0] * koef;
+                Mloc[0, 1] = element.gamma * Mx[0,1] * My[0,0] * koef;
+                Mloc[0, 2] = element.gamma * Mx[0,0] * My[0,1] * koef;
+                Mloc[0, 3] = element.gamma * Mx[0, 1] * My[0, 1] * koef;
+                Mloc[1, 0] = Mloc[0, 1] * koef;
+                Mloc[1, 1] = element.gamma * Mx[1, 1] * My[0, 0] * koef;
+                Mloc[1, 2] = element.gamma * Mx[1, 0] * My[0, 1] * koef;
+                Mloc[1, 3] = element.gamma * Mx[1, 1] * My[0, 1] * koef;
+                Mloc[2, 0] = Mloc[0, 2] * koef;
+                Mloc[2, 1] = Mloc[1, 2] * koef;
+                Mloc[2, 2] = element.gamma * Mx[0, 0] * My[1, 1] * koef;
+                Mloc[2, 3] = element.gamma * Mx[0, 1] * My[1, 1] * koef;
+                Mloc[3, 0] = Mloc[0, 3] * koef;
+                Mloc[3, 1] = Mloc[1, 3] * koef;
+                Mloc[3, 2] = Mloc[2, 3] * koef;
+                Mloc[3, 3] = element.gamma * Mx[1, 1] * My[1, 1] * koef;
                 Ml.Add(Mloc);
             }
         }
@@ -243,15 +276,12 @@ namespace Electric
                 //Build&Solve
                 //Re-part
                 buildMatrix();
-                buildAphiRe();
+                b = new double[size * 2];
+                buildAphi();
                 b = solveMatrix(); // Pseudo-decidion
-                qRe = new double[size];
-                qRe = solveMatrix(); //Real decidion
-                //Im-part
-                buildAphiIm();
-                b = solveMatrix(); // Pseudo-decidion
-                qIm = new double[size];
-                qIm = solveMatrix(); //Real decidion
+                printvect(b, "b");
+                q = new double[size*2];
+                q = solveMatrix(); //Real decidion
 
                 giveDecidion();
             }
@@ -260,19 +290,19 @@ namespace Electric
         //Completing q-vector
         private void giveDecidion()
         {
-            for(int i = 0; i < size; i++)
+            string qv = "";  // q-vector
+           for(int i = 0; i < q.Length; i++)
             {
-                q+= qRe[i].ToString() +' ';
-                if (qIm[i] != 0)
+                qv+= q[i].ToString() +' ';
+                if (i%2 == 1 && q[i] != 0)
                 {
-                    if (qIm[i] > 0) q += "+"; // Positive sign
-                    q += qIm[i].ToString() + "i";
+                    qv += 'i';
                 }
-                q += '\n';
+                qv += '\n';
             }
 
             //Print
-            System.IO.File.WriteAllText("..\\..\\print\\" + "q" + ".txt", q);
+            System.IO.File.WriteAllText("..\\..\\print\\" + "q" + ".txt", qv);
 
         }
         // Print vector or matrix
@@ -304,8 +334,8 @@ namespace Electric
         // Portrait Building
         private void buildPortrait()
         {
-            int sizej = int.Parse(xCrush.Text) + 1;
-            int sizei = int.Parse(yCrush.Text) + 1;
+            sizej = int.Parse(xCrush.Text);
+            sizei = int.Parse(yCrush.Text);
             portrait = new image[sizei, sizej];
             int num = 0;
             for(int i = 0; i < sizei;i++)
@@ -316,33 +346,22 @@ namespace Electric
                     portrait[i, j] = im;
                     num++;
                 }
-            // Making supporting Matrix with elements numbers. Look at Scheme 1
-            int[,] sup = new int[sizei - 1, sizej - 1];
-            num = 0; // reuse
-            for (int i = 0; i < sizei - 1; i++)
-                for (int j = 0; j < sizej - 1; j++)
-                {
-                    sup[i, j] = num;
-                    num++;
-                }
+            
             // Search and add elements to corresponding nodes
-            for (int i = 0; i < sizei - 1; i++)
-                for (int j = 0; j < sizej - 1; j++)
+            for (int i = 0; i < sizei; i++)
+                for (int j = 0; j < sizej; j++)
                 { 
-                    // Define and search nodes
-                    int n0 = sup[i, j]  +i;
-                    int n1 = n0+1;
-                    int n2 = n0+sizej;
-                    int n3 = n2 + 1;
-                    // Go all nodes 
-                    for (int k = 0; k < sizei; k++)
-                        for (int m = 0; m < sizej; m++)
-                        {
-                            if (portrait[k,m].n == n0 || portrait[k, m].n == n1 || 
-                                portrait[k, m].n == n2 || portrait[k, m].n == n3)
-                                portrait[k, m].els.Add(sup[i,j]);
-                        }
+                    // Define nodes
+                    int n2 = portrait[i, j].n + i; // 2
+                    int n3 = n2+1; // 3
+                    int n0 = n2+(sizej +1); // 0
+                    int n1 = n0 + 1; // 1
 
+                    // Add nodes in the order
+                    portrait[i, j].els.Add(n0);
+                    portrait[i, j].els.Add(n1);
+                    portrait[i, j].els.Add(n2);
+                    portrait[i, j].els.Add(n3);
                 }
                 }
 
@@ -375,6 +394,7 @@ namespace Electric
 
                         el.dr = dr;
                         el.dz = dz;
+                        el.r =Math.Sqrt(Math.Pow((i+0.5)*dr, 2) + Math.Pow((j + 0.5) * dz, 2));
 
                         elements.Add(el);
                     }
@@ -474,7 +494,7 @@ namespace Electric
         }
 
 
-        
+
 
     }
 
@@ -505,11 +525,14 @@ namespace Electric
 
         public double lambda = 1 / (1e-7 * 4 * Math.PI);// 1/myu0
         public double gamma = 1 ;// ??
+        public double sigma = 1;
+        public double r;
     }
 
     public class image
     {
         public int n;
         public List<int> els = new List<int>();
+        
     }
 }

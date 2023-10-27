@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Electric
 {
@@ -21,24 +22,31 @@ namespace Electric
     /// </summary>
     public partial class MainWindow : Window
     {
-        double a = 0; // Only for drawning
+        double a = 3; // Only for drawning
         double kr; // Scaling x
         double kz; // Scaling y
         double r;
         double z;
+        double w = 1;
+        double dr; // element's width
+        double dz; // element's deepth
         int sizei; // matrix size
         int sizej; // matrix size
         int size; // Global matrix size
+        bool iflag = false;
         double sigma = 100; // S/m
         List<double[,]> Ml; // M locals
         List<double[,]> Gl; // G locals
         double[,] M;
         double[,] G;
         double[,] A; // Matrix
+        double[,] Ac; // cos matrix (Re)
+        double[,] As; // sin Matrix (Im)
         double[] b; // 'true' decision vector 
         double[] q; // finite decision vector (Re)
+        int[,] Nods;
         //string q =""; // finite decision vector 
-        image[,] portrait; // Matrix portrait
+        img[,] portrait; // Matrix portrait
         DrawingGroup drawingGroup = new DrawingGroup();
         List<Element> elements;
         Element field = new Element();
@@ -114,17 +122,24 @@ namespace Electric
         }
 
         // Builds A matrix from M & G
+
+        private void buildsincos() //As & Ac
+        {
+            A = new double[size * 2, size * 2];
+            Ac = new double[size, size];
+            As = new double[size, size];
+            for (int i = 0; i < size; i++)
+                for (int j = 0; j < size; j++)
+                {
+                    /*Ac[i, j] = -G[i, j] + M[i, j] * (sigma - 1);
+                    As[i, j] = -G[i, j] - M[i, j] * (sigma + 1);*/
+                    Ac[i, j] = -G[i, j] + M[i, j] * (sigma - w)*w;
+                    As[i, j] = -G[i, j] - M[i, j] * (w*sigma + w*w);
+                }
+        }
         private void buildA()
         {
-            A = new double[size*2, size*2];
-            double[,] Ac= new double[size, size];
-            double[,] As= new double[size, size];
-            for (int i = 0; i < size; i++)
-                for (int j = 0;j < size; j++)
-                {
-                    Ac[i, j] = -G[i, j] + M[i, j] * (sigma - 1);
-                    As[i, j] = -G[i, j] - M[i, j] * (sigma + 1);
-                }
+            buildsincos();
             // Look at Scheme 2
             for (int i = 0; i < size; i++)
                 for (int j = 0; j < size; j++)
@@ -150,6 +165,129 @@ namespace Electric
             else b[i] = 3;
         }
 
+        //testing
+        private void buildAtest()
+        {
+            int n = 0; // Number of a node
+            
+            buildsincos();
+            
+            buildA();
+            // Inserting requred values
+            for (int i = 0; i <= sizei; i++)
+                for (int j = 0; j <= sizej; j++)
+                {
+                    if (i == 0 || j == 0 || i == sizei || j == sizej)
+                    {
+                        n = Nods[i, j]*2;
+                        // Changing strings in A
+                        for(int k = 0; k < size*2; k++)
+                        {
+                            A[n,k] = 0;
+                            A[n+1,k] = 0;
+                        }
+                        A[n, n] = 1;
+                        A[n + 1, n + 1] = 1;
+                    }
+
+                }
+            
+        }
+
+        // Changes b-vector
+        private void testbconst() 
+        {
+            /*for(int i = 0; i < b.Length; i++)
+            {
+                b[i] = 0;
+            }*/
+            for (int i = 0; i <= sizei; i++)
+                for (int j = 0; j <= sizej; j++)
+                {
+                    if (i == 0 || j == 0 || i == sizei || j == sizej)
+                    {
+                        int n = Nods[i, j];
+                        b[n * 2] = 7;
+                        b[n * 2 + 1] = 7;
+                    }
+                }
+        }
+        private void testbr(int pow) 
+        {
+            double drr = double.Parse(xVal.Text) / sizei;
+            double drz = double.Parse(yVal.Text) / sizej;
+            for (int i = 0; i <= sizei; i++)
+                for (int j = 0; j <= sizej; j++)
+                {
+                    if (i == 0 || j == 0 || i == sizei || j == sizej)
+                    {
+                        double r = Math.Sqrt(Math.Pow(drr*j, 2) + Math.Pow(drz*i, 2));
+                        int n = Nods[i, j];
+                        b[n * 2] = Math.Pow(r, pow);
+                        b[n * 2 + 1] = Math.Pow(r, pow);
+                    }
+                }
+        }
+        private void test()
+        {
+            double[] qtest = new double[size];
+
+            // Get right part
+            buildAphi();
+            buildA();
+            b = solveMatrix();
+            printvect(b, "btest");
+
+            // Get A for test
+            buildAtest();
+            printmat(A, "Atest");
+
+            // Change right part
+            testbconst(); 
+            printvect(b, "btestconst");
+
+            // Get result
+            qtest = solveMatrix();
+            printvect(qtest, "qtest");
+
+            /*  // Checking error
+              // first, get THAT b
+              buildAphi();
+              buildA();
+              b = solveMatrix();
+              testbconst();
+
+              // second, prepare matrix and find error
+              buildAtest();
+              qtest = mult(A, qtest);
+              qtest = divide(qtest, b);
+              printvect(qtest, "check");*/
+
+            // f = r
+            buildAphi();
+            buildA();
+            b = solveMatrix();
+            // Get A for test
+            buildAtest();
+            // Change right part
+            testbr(1);
+            printvect(b, "btestr");
+            qtest = solveMatrix();
+            printvect(qtest, "qtestr");
+
+            // f = r^2
+            buildAphi();
+            buildA();
+            b = solveMatrix();
+            // Get A for test
+            buildAtest();
+            // Change right part
+            testbr(2);
+            printvect(b, "btestr^2");
+            qtest = solveMatrix();
+            printvect(qtest, "qtestr^2");
+
+        }
 
         private void buildlocal() 
         {
@@ -187,7 +325,7 @@ namespace Electric
                 Gloc[0, 1] = element.lambda * (Gx[0, 1] * My[0,0] + Mx[0, 1] * Gy[0,0]);
                 Gloc[0, 2] = element.lambda * (Gx[0, 0] * My[0,1] + Mx[0, 0] * Gy[0,1]);
                 Gloc[0, 3] = element.lambda * (Gx[0, 1] * My[0, 1] + Mx[0, 1] * Gy[0, 1]);
-                Gloc[1, 0] = Gloc[1, 2];
+                Gloc[1, 0] = Gloc[0, 1];
                 Gloc[1, 1] = element.lambda * (Gx[1, 1] * My[0, 0] + Mx[1, 1] * Gy[0, 0]);
                 Gloc[1, 2] = element.lambda * (Gx[1, 0] * My[0, 1] + Mx[1, 0] * Gy[0, 1]);
                 Gloc[1, 3] = element.lambda * (Gx[1, 1] * My[0, 1] + Mx[1, 1] * Gy[0, 1]);
@@ -213,17 +351,17 @@ namespace Electric
                 Mloc[0, 1] = element.gamma * Mx[0,1] * My[0,0] * koef;
                 Mloc[0, 2] = element.gamma * Mx[0,0] * My[0,1] * koef;
                 Mloc[0, 3] = element.gamma * Mx[0, 1] * My[0, 1] * koef;
-                Mloc[1, 0] = Mloc[0, 1] * koef;
+                Mloc[1, 0] = Mloc[0, 1];
                 Mloc[1, 1] = element.gamma * Mx[1, 1] * My[0, 0] * koef;
                 Mloc[1, 2] = element.gamma * Mx[1, 0] * My[0, 1] * koef;
                 Mloc[1, 3] = element.gamma * Mx[1, 1] * My[0, 1] * koef;
-                Mloc[2, 0] = Mloc[0, 2] * koef;
-                Mloc[2, 1] = Mloc[1, 2] * koef;
+                Mloc[2, 0] = Mloc[0, 2];
+                Mloc[2, 1] = Mloc[1, 2];
                 Mloc[2, 2] = element.gamma * Mx[0, 0] * My[1, 1] * koef;
                 Mloc[2, 3] = element.gamma * Mx[0, 1] * My[1, 1] * koef;
-                Mloc[3, 0] = Mloc[0, 3] * koef;
-                Mloc[3, 1] = Mloc[1, 3] * koef;
-                Mloc[3, 2] = Mloc[2, 3] * koef;
+                Mloc[3, 0] = Mloc[0, 3];
+                Mloc[3, 1] = Mloc[1, 3];
+                Mloc[3, 2] = Mloc[2, 3];
                 Mloc[3, 3] = element.gamma * Mx[1, 1] * My[1, 1] * koef;
                 Ml.Add(Mloc);
             }
@@ -231,7 +369,8 @@ namespace Electric
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            
+            sigma = double.Parse(sigVal.Text);
+            w = double.Parse(wVal.Text);
             drawingGroup.Children.Clear();
             buildaxes();
             elements = new List<Element>();
@@ -253,17 +392,17 @@ namespace Electric
 
 
                 kr = (graphImage.Width - a) / r;
-                kz = (graphImage.Height / 2) / z;
+                kz = ((graphImage.Height - a) / 2) / z;
 
                 //Draw Field
                 GeometryDrawing myGeometryDrawing = new GeometryDrawing();
                 GeometryGroup lines = new GeometryGroup();
-                myGeometryDrawing.Pen = new Pen(Brushes.Red, 2);
+                myGeometryDrawing.Pen = new Pen(Brushes.Red, 1);
 
                 //Add lines (field borders)
                 lines.Children.Add(new LineGeometry(new Point(a, graphImage.Height / 2), new Point(r * kr - a, graphImage.Height / 2))); // up border
-                lines.Children.Add(new LineGeometry(new Point(a, graphImage.Height / 2 + z * kz), new Point(r * kr - a, graphImage.Height / 2 -6 + z * kz))); // dowh
-                lines.Children.Add(new LineGeometry(new Point(r * kr - a - 6, graphImage.Height / 2), new Point(r * kr - a -6, graphImage.Height / 2 + z * kz))); // right
+                lines.Children.Add(new LineGeometry(new Point(a, graphImage.Height / 2 + z * kz), new Point(r * kr - a, graphImage.Height / 2 + z * kz))); // down
+                lines.Children.Add(new LineGeometry(new Point(r * kr - a, graphImage.Height / 2), new Point(r * kr - a, graphImage.Height / 2 + z * kz))); // right
                 lines.Children.Add(new LineGeometry(new Point(a, graphImage.Height / 2), new Point(a, graphImage.Height / 2 + z * kz))); // left
 
 
@@ -284,6 +423,7 @@ namespace Electric
                 q = solveMatrix(); //Real decidion
 
                 giveDecidion();
+                test();
             }
         }
 
@@ -294,9 +434,12 @@ namespace Electric
            for(int i = 0; i < q.Length; i++)
             {
                 qv+= q[i].ToString() +' ';
-                if (i%2 == 1 && q[i] != 0)
+                if (iflag)
                 {
-                    qv += 'i';
+                    if (i % 2 == 1 && q[i] != 0)
+                    {
+                        qv += 'i';
+                    }
                 }
                 qv += '\n';
             }
@@ -318,11 +461,11 @@ namespace Electric
         }
         private void printmat(double[,] mat, string matname)
         {
-            int w = Convert.ToInt32(Math.Pow(mat.Length, 0.5));
+            int l = Convert.ToInt32(Math.Pow(mat.Length, 0.5));
             string s = "";
-            for (int i = 0; i < w; i++)
+            for (int i = 0; i < l; i++)
             {
-                for (int j = 0; j < w; j++)
+                for (int j = 0; j < l; j++)
                 {
                     s += mat[i, j].ToString() + '\t';
                 }
@@ -334,14 +477,13 @@ namespace Electric
         // Portrait Building
         private void buildPortrait()
         {
-            sizej = int.Parse(xCrush.Text);
-            sizei = int.Parse(yCrush.Text);
-            portrait = new image[sizei, sizej];
+            
+            portrait = new img[sizei, sizej];
             int num = 0;
             for(int i = 0; i < sizei;i++)
                 for (int j = 0;j < sizej; j++)
                 {
-                    image im = new image();
+                    img im = new img();
                     im.n = num;
                     portrait[i, j] = im;
                     num++;
@@ -380,8 +522,8 @@ namespace Electric
             }
             else
             {
-                double dr = r / double.Parse(xcrush);
-                double dz = z / double.Parse(zcrush);
+                dr = r / double.Parse(xcrush);
+                dz = z / double.Parse(zcrush);
 
                 for (int i = 1; i <= double.Parse(xcrush); i++)
                     for (int j = 1; j <= double.Parse(zcrush); j++)
@@ -402,22 +544,55 @@ namespace Electric
                 // Paint
                 GeometryDrawing myGeometryDrawing = new GeometryDrawing();
                 GeometryGroup lines = new GeometryGroup();
-                myGeometryDrawing.Pen = new Pen(Brushes.Red, 3);
+                myGeometryDrawing.Pen = new Pen(Brushes.Red, 1);
                 for (int i = 1; i < int.Parse(xcrush); i++)
                 {
-                    lines.Children.Add(new LineGeometry(new Point(i * dr * kr, (graphImage.Height -6)/ 2), new Point(i * dr * kr, (graphImage.Height - 6) / 2 + z * kz)));
+                    lines.Children.Add(new LineGeometry(new Point(i * dr * kr, (graphImage.Height)/ 2), new Point(i * dr * kr, (graphImage.Height) / 2 + z * kz)));
                 }
                 for (int j = 1; j < int.Parse(zcrush); j++)
                 {
-                    lines.Children.Add(new LineGeometry(new Point(a, j * dz * kz + (graphImage.Height -6)/ 2), new Point(r * kr - a, j * dz * kz + (graphImage.Height - 6) / 2)));
+                    lines.Children.Add(new LineGeometry(new Point(a, j * dz * kz + (graphImage.Height)/ 2), new Point(r * kr - a, j * dz * kz + (graphImage.Height) / 2)));
                 }
                 myGeometryDrawing.Geometry = lines;
                 drawingGroup.Children.Add(myGeometryDrawing);
                 graphImage.Source = new DrawingImage(drawingGroup);
             }
+
+            sizej = int.Parse(xCrush.Text);
+            sizei = int.Parse(yCrush.Text);
+            int n = 0;
+            Nods = new int[sizei + 1, sizej + 1];
+            for (int i = 0; i <= sizei; i++)
+                for (int j = 0; j <= sizej; j++)
+                {
+                    Nods[i, j] = n;
+                    n++;
+                }
         }
 
+        // Multyplier
+        private double[] mult(double[,] mat, double[] vect)
+        {
+            double[]res = new double[vect.Length];
 
+            for(int k = 0; k < vect.Length; k++)
+            {
+                for (int i = 0; i < vect.Length; i++)
+                {
+                    res[k] += mat[k, i] * vect[i];
+                }
+            }
+
+            return res;
+        }
+        private double[] divide(double[] vect1, double[] vect2)
+        {
+            for (int k = 0; k < vect1.Length; k++)
+            {
+                vect1[k] -= vect2[k];
+            }
+            return vect1;
+        }
         // Gauss solver
         private double[] solveMatrix()
         {
@@ -493,9 +668,35 @@ namespace Electric
             }
         }
 
+        private void graphImage_MouseMove(object sender, MouseEventArgs e)
+        {
+            double mr = e.GetPosition(graphImage).X;
+            double mz = e.GetPosition(graphImage).Y;
+            double nr = 0;
+            double nz = 0;
+            for (int i = 0; i <= sizei; i++)
+                for (int j = 0; j <= sizej; j++)
+                
+                {
+                     nr = dr * kr * j;
+                     nz = graphImage.Height / 2 + dz * kz * i;
+                    if (nr - 3 < mr && nr + 3 > mr)
+                    {
+                        if (nz - 3 < mz && nz + 3 > mz)
+                        {
+                            ToolTip tooltip = new ToolTip { Content = Nods[i, j].ToString() };
+                            graphImage.ToolTip = tooltip;
+                        }
+                    }
+                    
+                }
 
+        }
 
-
+        private void CheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            iflag = !iflag;
+        }
     }
 
 
@@ -529,7 +730,7 @@ namespace Electric
         public double r;
     }
 
-    public class image
+    public class img
     {
         public int n;
         public List<int> els = new List<int>();

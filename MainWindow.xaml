@@ -5,14 +5,30 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Electric"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="GridCounter" Height="450" Width="800">
     <Grid x:Name="FieldButton">
-        <Image x:Name="graphImage" Margin="97,72,295,114" Width="420" Height="240"/>
-        <Button Content="Field Button" HorizontalAlignment="Left" Margin="604,270,0,0" VerticalAlignment="Top" Click="Button_Click"/>
-        <TextBox x:Name="xVal" HorizontalAlignment="Left" Height="24" Margin="604,105,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="100"/>
-        <TextBox x:Name="yVal" HorizontalAlignment="Left" Height="21" Margin="604,152,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="100"/>
-        <TextBox x:Name="xCrush" HorizontalAlignment="Left" Margin="604,196,0,0" TextWrapping="Wrap" Text="4" VerticalAlignment="Top" Width="120"/>
-        <TextBox x:Name="yCrush" HorizontalAlignment="Left" Margin="604,219,0,0" TextWrapping="Wrap" Text="5" VerticalAlignment="Top" Width="120"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="530*"/>
+            <ColumnDefinition Width="181*"/>
+            <ColumnDefinition Width="89*"/>
+        </Grid.ColumnDefinitions>
+        <Button Content="Build the field" HorizontalAlignment="Left" Margin="96,337,0,0" VerticalAlignment="Top" Click="Button_Click" Grid.Column="1"/>
+        <TextBox x:Name="xVal" HorizontalAlignment="Left" Height="20" Margin="74,105,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="120" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <TextBox x:Name="yVal" HorizontalAlignment="Left" Height="21" Margin="74,152,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="120" RenderTransformOrigin="0.515,3.966" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <TextBox x:Name="xCrush" HorizontalAlignment="Left" Margin="74,221,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="120" TextAlignment="Center" Panel.ZIndex="1" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <TextBox x:Name="yCrush" HorizontalAlignment="Left" Margin="74,251,0,0" TextWrapping="Wrap" Text="2" VerticalAlignment="Top" Width="120" TextAlignment="Center" Panel.ZIndex="1" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <Image x:Name="graphImage" HorizontalAlignment="Left" Height="240" Margin="106,53,0,0" VerticalAlignment="Top" Width="420" MouseMove="graphImage_MouseMove"/>
+        <Label Content="r" HorizontalAlignment="Left" Margin="0,152,0,0" VerticalAlignment="Top" FontSize="16" Panel.ZIndex="1" Grid.Column="1"/>
+        <Label Content="z" HorizontalAlignment="Left" Margin="89,50,0,0" VerticalAlignment="Top" FontSize="16"/>
+        <Label Content="Divide r by                                       parts" HorizontalAlignment="Left" Margin="8,215,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <Label Content="Divide z by                                       parts" HorizontalAlignment="Left" Margin="8,246,0,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Grid.Column="1"/>
+        <Label Content="Radius:" HorizontalAlignment="Left" Margin="74,80,0,0" VerticalAlignment="Top" Height="25" Grid.Column="1"/>
+        <Label Content=" Deepness:" HorizontalAlignment="Left" Margin="70,126,0,0" VerticalAlignment="Top" Height="25" Grid.Column="1"/>
+        <TextBox x:Name="sigVal" HorizontalAlignment="Left" Margin="342,323,0,0" TextWrapping="Wrap" Text="100" VerticalAlignment="Top" Width="50"/>
+        <Label Content="σ" HorizontalAlignment="Left" Margin="320,319,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="wVal" HorizontalAlignment="Left" Margin="342,354,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" Width="50"/>
+        <Label Content="ω" HorizontalAlignment="Left" Margin="320,350,0,0" VerticalAlignment="Top"/>
+        <CheckBox Content="i" HorizontalAlignment="Left" Margin="446,360,0,0" VerticalAlignment="Top" Checked="CheckBox_Checked"/>
 
     </Grid>
 </Window>

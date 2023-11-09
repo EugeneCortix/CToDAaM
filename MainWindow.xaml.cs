@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -22,6 +23,8 @@ namespace Electric
     /// </summary>
     public partial class MainWindow : Window
     {
+        double sr; // r for source
+        double sz; // z for source
         double a = 3; // Only for drawning
         double kr; // Scaling x
         double kz; // Scaling y
@@ -369,6 +372,24 @@ namespace Electric
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            //Source
+            if (!(double.TryParse(Sourcer.Text, out double num1)) || !(double.TryParse(Sourcez.Text, out double num2)))
+            {
+                MessageBox.Show("Wrong!");
+                return;
+            }
+            else
+            {
+             sr = double.Parse(Sourcer.Text);
+             sz = double.Parse(Sourcez.Text);
+                if(sz < 0 || sr < 0)
+                {
+                    MessageBox.Show("Wrong!");
+                    return;
+                }
+            }
+            
+            // Elements
             sigma = double.Parse(sigVal.Text);
             w = double.Parse(wVal.Text);
             drawingGroup.Children.Clear();
@@ -378,10 +399,9 @@ namespace Electric
             string xval = xVal.Text;
             if (!(double.TryParse(yval, out double number1)) || !(double.TryParse(xval, out double number2)))
             {
-                MessageBox.Show("Ты что вводишь, дуралей?");
+                MessageBox.Show("Wrong!");
+                return;
             }
-            else
-            {
                 r = double.Parse(xval);
                 z = double.Parse(yval);
                 // points of the field
@@ -411,7 +431,7 @@ namespace Electric
                 graphImage.Source = new DrawingImage(drawingGroup);
 
                 MakeElements();
-
+            /*
                 //Build&Solve
                 //Re-part
                 buildMatrix();
@@ -424,7 +444,7 @@ namespace Electric
 
                 giveDecidion();
                 test();
-            }
+            */
         }
 
         //Completing q-vector
@@ -510,53 +530,147 @@ namespace Electric
         // building of elements
         private void MakeElements()
         {
-            string zcrush = yCrush.Text;
-            string xcrush = xCrush.Text;
-            if (!(double.TryParse(zcrush, out double number1)) || !(double.TryParse(xcrush, out double number2)))
+            double rdis = Convert.ToDouble(rdischarge.Text);
+            double zdis = Convert.ToDouble(zdischarge.Text);
+            double rparts = Convert.ToDouble(xCrush.Text);
+            double zparts = Convert.ToDouble(yCrush.Text);
+            Point zeroPoint = new Point(Convert.ToDouble(Sourcer.Text) * kr +a,  // for drawing
+                graphImage.Height / 2 + Convert.ToDouble(Sourcez.Text) * kz);
+            Point source = new Point(Convert.ToDouble(Sourcer.Text),  // for counting
+                -Convert.ToDouble(Sourcez.Text));
+            // Supporting elements building, look Scheme3
+          /*  Element supel1 = new Element();
+            supel1.p1 = new Point() {X=0, Y = source.Y};
+            supel1.p2 = new Point() {X=0, Y = 0};
+            supel1.p3 = source;
+            supel1.p4 = new Point() {X=source.X, Y = 0};
+
+            Element supel2 = new Element();
+            supel2.p1 = new Point() { X = 0, Y = -Convert.ToDouble(yVal.Text) };
+            supel2.p2 = new Point() { X = 0, Y = source.Y };
+            supel2.p3 = new Point() { X = source.X, Y = -Convert.ToDouble(yVal.Text) };
+            supel2.p4 = source;
+
+            Element supel3 = new Element();
+            supel3.p1 = source;
+            supel3.p2 = new Point() { X = source.X, Y = 0 };
+            supel3.p3 = new Point() { X = Convert.ToDouble(xVal.Text), Y = source.Y };
+            supel3.p4 = new Point() { X = Convert.ToDouble(xVal.Text), Y = 0 };
+
+            Element supel4 = new Element();
+            supel4.p1 = new Point() { X = source.X, Y = -Convert.ToDouble(yVal.Text) };
+            supel4.p2 = source;
+            supel4.p3 = new Point() { X = Convert.ToDouble(xVal.Text), Y = -Convert.ToDouble(yVal.Text) };
+            supel4.p4 = new Point() { X = Convert.ToDouble(xVal.Text), Y = source.Y };
+            */
+            // Making elements
+            // Counting first drl &
+            double ksumx = 0;
+            for (int i = 0; i < Convert.ToInt32(xCrush.Text); i++)
+                ksumx += Math.Pow(rdis, i);
+            double drl = source.X / ksumx;
+            double ksumy = 0;
+            for (int i = 0; i < Convert.ToInt32(yCrush.Text); i++)
+                ksumy += Math.Pow(zdis, i);
+            //
+            double dzu = source.Y / ksumy;                                   // from up, < 0
+            double dzd = (-Convert.ToDouble(yVal.Text) - source.Y)/ ksumy;   // from down, < 0
+            //double drl = source.X / Convert.ToDouble(xCrush.Text);                                   // from left
+            double drr =(Convert.ToDouble(xVal.Text) - source.X) / ksumx;    // from right
+            //prevoius x & y lines, look Scheme 4
+            double xleftside = 0; 
+            double yprev1 = 0;
+            double yprev2 = -Convert.ToDouble(yVal.Text); 
+            double xprev3 = Convert.ToDouble(xVal.Text);
+            double yprev3 = 0;
+            double xprev4 = Convert.ToDouble(xVal.Text);
+            double yprev4 = -Convert.ToDouble(yVal.Text);
+            for (int i = 1; i <= Convert.ToInt32(yCrush.Text); i++)
             {
-                MessageBox.Show("Ты что вводишь, дуралей?");
+                for (int j = 1; j <= Convert.ToInt32(xCrush.Text); j++)
+                {
+                    Element el1 = new Element();
+                    // the first sector
+                    el1.p1 = new Point() { X = xleftside, Y = yprev1+dzu};
+                    el1.p2 = new Point() { X = xleftside, Y = yprev1};
+                    el1.p3 = new Point() { X = xleftside+drl, Y = yprev1+dzu};
+                    el1.p4 = new Point() { X = xleftside+drl, Y = yprev1};
+                    elements.Add(el1);
+                    //the second sector
+                    Element el2 = new Element();
+                    el2.p1 = new Point() { X = xleftside, Y = yprev2 - dzd };
+                    el2.p2 = new Point() { X = xleftside, Y = yprev2 };
+                    el2.p3 = new Point() { X = xleftside + drl, Y = yprev2 - dzd };
+                    el2.p4 = new Point() { X = xleftside + drl, Y = yprev2 };
+                    elements.Add(el2);
+                    //the third sector
+                    Element el3 = new Element();
+                    el3.p1 = new Point() { X = xprev3, Y = yprev3 + dzu };
+                    el3.p2 = new Point() { X = xprev3, Y = yprev3 };
+                    el3.p3 = new Point() { X = xprev3 - drr, Y = yprev3 +dzu };
+                    el3.p4 = new Point() { X = xprev3 - drr, Y = yprev3 };
+                    elements.Add(el3);
+                    //the fourth sector
+                    Element el4 = new Element();
+                    el4.p1 = new Point() { X = xprev4, Y = yprev4 - dzd };
+                    el4.p2 = new Point() { X = xprev4, Y = yprev4 };
+                    el4.p3 = new Point() { X = xprev4 - drr, Y = yprev4 - dzd };
+                    el4.p4 = new Point() { X = xprev4 - drr, Y = yprev4 };
+                    elements.Add(el4);
+                    //Changing deltas
+                    xleftside += drl;
+                    xprev3 -= drr;
+                    xprev4 -= drr;
+                    drl *= rdis;
+                    drr *= rdis;
+                    
+                }
+                yprev1 += dzu;
+                yprev2 -= dzd;
+                yprev3 += dzu;
+                yprev4 -= dzd;
+                dzu *= zdis;
+                dzd *= zdis;
+                xleftside = 0;
+                xprev3 = Convert.ToDouble(xVal.Text);
+                xprev4 = Convert.ToDouble(xVal.Text);
+                // Recovering deltas for x-coords changing
+                drl = source.X / ksumx;
+                drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;
             }
-            else if (double.Parse(xcrush) <= 0 || double.Parse(zcrush) <= 0)
-            {
-                MessageBox.Show("Ты что вводишь, дуралей?");
-            }
-            else
-            {
-                dr = r / double.Parse(xcrush);
-                dz = z / double.Parse(zcrush);
 
-                for (int i = 1; i <= double.Parse(xcrush); i++)
-                    for (int j = 1; j <= double.Parse(zcrush); j++)
-                    {
-                        Element el = new Element();
-                        el.p1 = new Point() { X = (i - 1) * dr, Y = -j * dz };
-                        el.p2 = new Point() { X = (i - 1) * dr, Y = -(j - 1) * dz };
-                        el.p3 = new Point() { X = i * dr, Y = -j * dz };
-                        el.p4 = new Point() { X = i * dr, Y = -(j - 1) * dz };
-
-                        el.dr = dr;
-                        el.dz = dz;
-                        el.r =Math.Sqrt(Math.Pow((i+0.5)*dr, 2) + Math.Pow((j + 0.5) * dz, 2));
-
-                        elements.Add(el);
-                    }
-
-                // Paint
-                GeometryDrawing myGeometryDrawing = new GeometryDrawing();
+                    // Paint
+                    GeometryDrawing myGeometryDrawing = new GeometryDrawing();
+                    GeometryDrawing sourceDrawing = new GeometryDrawing();
                 GeometryGroup lines = new GeometryGroup();
                 myGeometryDrawing.Pen = new Pen(Brushes.Red, 1);
-                for (int i = 1; i < int.Parse(xcrush); i++)
-                {
-                    lines.Children.Add(new LineGeometry(new Point(i * dr * kr, (graphImage.Height)/ 2), new Point(i * dr * kr, (graphImage.Height) / 2 + z * kz)));
-                }
-                for (int j = 1; j < int.Parse(zcrush); j++)
-                {
-                    lines.Children.Add(new LineGeometry(new Point(a, j * dz * kz + (graphImage.Height)/ 2), new Point(r * kr - a, j * dz * kz + (graphImage.Height) / 2)));
-                }
-                myGeometryDrawing.Geometry = lines;
-                drawingGroup.Children.Add(myGeometryDrawing);
-                graphImage.Source = new DrawingImage(drawingGroup);
+                sourceDrawing.Pen = new Pen(Brushes.Blue, 1);
+               foreach(var e in elements)
+            {
+                lines.Children.Add(new LineGeometry(new Point(e.p1.X*kr+a, -e.p1.Y*kz + graphImage.Height/2),
+                    new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2)));
+
+                lines.Children.Add(new LineGeometry(new Point(e.p1.X * kr + a, -e.p1.Y * kz + graphImage.Height / 2),
+                    new Point(e.p3.X * kr +a, -e.p3.Y * kz + graphImage.Height / 2)));
+
+                lines.Children.Add(new LineGeometry(new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2),
+                    new Point(e.p4.X * kr + a, -e.p4.Y * kz + graphImage.Height / 2)));
+
+                lines.Children.Add(new LineGeometry(new Point(e.p4.X * kr +a, -e.p4.Y * kz + graphImage.Height / 2),
+                    new Point(e.p3.X * kr +a, -e.p3.Y * kz + graphImage.Height / 2)));
             }
+                drawingGroup.Children.Add(myGeometryDrawing);
+                // Paint source
+                EllipseGeometry ellipse = new EllipseGeometry();
+            ellipse.Center = zeroPoint;
+            ellipse.RadiusX = 3;
+            ellipse.RadiusY = 3;
+
+            myGeometryDrawing.Geometry = lines;
+            sourceDrawing.Geometry = ellipse;
+            drawingGroup.Children.Add(sourceDrawing);
+            graphImage.Source = new DrawingImage(drawingGroup);
+            
 
             sizej = int.Parse(xCrush.Text);
             sizei = int.Parse(yCrush.Text);

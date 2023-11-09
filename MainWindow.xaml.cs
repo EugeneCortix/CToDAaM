@@ -579,61 +579,54 @@ namespace Electric
             double drr =(Convert.ToDouble(xVal.Text) - source.X) / ksumx;    // from right
             //prevoius x & y lines, look Scheme 4
             double xleftside = 0; 
-            double yprev1 = 0;
-            double yprev2 = -Convert.ToDouble(yVal.Text); 
-            double xprev3 = Convert.ToDouble(xVal.Text);
-            double yprev3 = 0;
-            double xprev4 = Convert.ToDouble(xVal.Text);
-            double yprev4 = -Convert.ToDouble(yVal.Text);
+            double yupside = 0;
+            double ybottom = -Convert.ToDouble(yVal.Text); 
+            double xrightside = Convert.ToDouble(xVal.Text);
             for (int i = 1; i <= Convert.ToInt32(yCrush.Text); i++)
             {
                 for (int j = 1; j <= Convert.ToInt32(xCrush.Text); j++)
                 {
                     Element el1 = new Element();
                     // the first sector
-                    el1.p1 = new Point() { X = xleftside, Y = yprev1+dzu};
-                    el1.p2 = new Point() { X = xleftside, Y = yprev1};
-                    el1.p3 = new Point() { X = xleftside+drl, Y = yprev1+dzu};
-                    el1.p4 = new Point() { X = xleftside+drl, Y = yprev1};
+                    el1.p1 = new Point() { X = xleftside, Y = yupside+dzu};
+                    el1.p2 = new Point() { X = xleftside, Y = yupside};
+                    el1.p3 = new Point() { X = xleftside+drl, Y = yupside+dzu};
+                    el1.p4 = new Point() { X = xleftside+drl, Y = yupside};
                     elements.Add(el1);
                     //the second sector
                     Element el2 = new Element();
-                    el2.p1 = new Point() { X = xleftside, Y = yprev2 - dzd };
-                    el2.p2 = new Point() { X = xleftside, Y = yprev2 };
-                    el2.p3 = new Point() { X = xleftside + drl, Y = yprev2 - dzd };
-                    el2.p4 = new Point() { X = xleftside + drl, Y = yprev2 };
+                    el2.p1 = new Point() { X = xleftside, Y = ybottom - dzd };
+                    el2.p2 = new Point() { X = xleftside, Y = ybottom };
+                    el2.p3 = new Point() { X = xleftside + drl, Y = ybottom - dzd };
+                    el2.p4 = new Point() { X = xleftside + drl, Y = ybottom };
                     elements.Add(el2);
                     //the third sector
                     Element el3 = new Element();
-                    el3.p1 = new Point() { X = xprev3, Y = yprev3 + dzu };
-                    el3.p2 = new Point() { X = xprev3, Y = yprev3 };
-                    el3.p3 = new Point() { X = xprev3 - drr, Y = yprev3 +dzu };
-                    el3.p4 = new Point() { X = xprev3 - drr, Y = yprev3 };
+                    el3.p1 = new Point() { X = xrightside, Y = yupside + dzu };
+                    el3.p2 = new Point() { X = xrightside, Y = yupside };
+                    el3.p3 = new Point() { X = xrightside - drr, Y = yupside +dzu };
+                    el3.p4 = new Point() { X = xrightside - drr, Y = yupside };
                     elements.Add(el3);
                     //the fourth sector
                     Element el4 = new Element();
-                    el4.p1 = new Point() { X = xprev4, Y = yprev4 - dzd };
-                    el4.p2 = new Point() { X = xprev4, Y = yprev4 };
-                    el4.p3 = new Point() { X = xprev4 - drr, Y = yprev4 - dzd };
-                    el4.p4 = new Point() { X = xprev4 - drr, Y = yprev4 };
+                    el4.p1 = new Point() { X = xrightside, Y = ybottom - dzd };
+                    el4.p2 = new Point() { X = xrightside, Y = ybottom };
+                    el4.p3 = new Point() { X = xrightside - drr, Y = ybottom - dzd };
+                    el4.p4 = new Point() { X = xrightside - drr, Y = ybottom };
                     elements.Add(el4);
                     //Changing deltas
                     xleftside += drl;
-                    xprev3 -= drr;
-                    xprev4 -= drr;
+                    xrightside -= drr;
                     drl *= rdis;
                     drr *= rdis;
                     
                 }
-                yprev1 += dzu;
-                yprev2 -= dzd;
-                yprev3 += dzu;
-                yprev4 -= dzd;
+                yupside += dzu;
+                ybottom -= dzd;
                 dzu *= zdis;
                 dzd *= zdis;
                 xleftside = 0;
-                xprev3 = Convert.ToDouble(xVal.Text);
-                xprev4 = Convert.ToDouble(xVal.Text);
+                xrightside = Convert.ToDouble(xVal.Text);
                 // Recovering deltas for x-coords changing
                 drl = source.X / ksumx;
                 drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;

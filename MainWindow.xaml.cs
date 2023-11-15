@@ -431,7 +431,7 @@ namespace Electric
                 graphImage.Source = new DrawingImage(drawingGroup);
 
                 MakeElements();
-            /*
+            
                 //Build&Solve
                 //Re-part
                 buildMatrix();
@@ -444,7 +444,7 @@ namespace Electric
 
                 giveDecidion();
                 test();
-            */
+            
         }
 
         //Completing q-vector
@@ -532,37 +532,18 @@ namespace Electric
         {
             double rdis = Convert.ToDouble(rdischarge.Text);
             double zdis = Convert.ToDouble(zdischarge.Text);
-            double rparts = Convert.ToDouble(xCrush.Text);
-            double zparts = Convert.ToDouble(yCrush.Text);
+            int rparts = Convert.ToInt32(xCrush.Text);
+            int zparts = Convert.ToInt32(yCrush.Text);
             Point zeroPoint = new Point(Convert.ToDouble(Sourcer.Text) * kr +a,  // for drawing
                 graphImage.Height / 2 + Convert.ToDouble(Sourcez.Text) * kz);
             Point source = new Point(Convert.ToDouble(Sourcer.Text),  // for counting
                 -Convert.ToDouble(Sourcez.Text));
-            // Supporting elements building, look Scheme3
-          /*  Element supel1 = new Element();
-            supel1.p1 = new Point() {X=0, Y = source.Y};
-            supel1.p2 = new Point() {X=0, Y = 0};
-            supel1.p3 = source;
-            supel1.p4 = new Point() {X=source.X, Y = 0};
+            // Maing supporting areas, look Scheme3
+            List<Element> supp1 = new List<Element>();
+            List<Element> supp2 = new List<Element>();
+            List<Element> supp3 = new List<Element>();
+            List<Element> supp4 = new List<Element>();
 
-            Element supel2 = new Element();
-            supel2.p1 = new Point() { X = 0, Y = -Convert.ToDouble(yVal.Text) };
-            supel2.p2 = new Point() { X = 0, Y = source.Y };
-            supel2.p3 = new Point() { X = source.X, Y = -Convert.ToDouble(yVal.Text) };
-            supel2.p4 = source;
-
-            Element supel3 = new Element();
-            supel3.p1 = source;
-            supel3.p2 = new Point() { X = source.X, Y = 0 };
-            supel3.p3 = new Point() { X = Convert.ToDouble(xVal.Text), Y = source.Y };
-            supel3.p4 = new Point() { X = Convert.ToDouble(xVal.Text), Y = 0 };
-
-            Element supel4 = new Element();
-            supel4.p1 = new Point() { X = source.X, Y = -Convert.ToDouble(yVal.Text) };
-            supel4.p2 = source;
-            supel4.p3 = new Point() { X = Convert.ToDouble(xVal.Text), Y = -Convert.ToDouble(yVal.Text) };
-            supel4.p4 = new Point() { X = Convert.ToDouble(xVal.Text), Y = source.Y };
-            */
             // Making elements
             // Counting first drl &
             double ksumx = 0;
@@ -592,28 +573,40 @@ namespace Electric
                     el1.p2 = new Point() { X = xleftside, Y = yupside};
                     el1.p3 = new Point() { X = xleftside+drl, Y = yupside+dzu};
                     el1.p4 = new Point() { X = xleftside+drl, Y = yupside};
-                    elements.Add(el1);
+                    el1.dr = drl;
+                    el1.dz = -dzu;
+                    el1.r = Math.Sqrt(Math.Pow(el1.p1.X + 0.5*drl, 2) + Math.Pow(el1.p2.Y + 0.5 * dzu, 2));
+                    supp1.Add(el1);
                     //the second sector
                     Element el2 = new Element();
                     el2.p1 = new Point() { X = xleftside, Y = ybottom - dzd };
                     el2.p2 = new Point() { X = xleftside, Y = ybottom };
                     el2.p3 = new Point() { X = xleftside + drl, Y = ybottom - dzd };
                     el2.p4 = new Point() { X = xleftside + drl, Y = ybottom };
-                    elements.Add(el2);
+                    el2.dr = drl;
+                    el2.dz = -dzd;
+                    el2.r = Math.Sqrt(Math.Pow(el1.p2.X + 0.5 * drl, 2) + Math.Pow(el2.p2.Y + 0.5 * dzd, 2));
+                    supp2.Add(el2);
                     //the third sector
                     Element el3 = new Element();
                     el3.p1 = new Point() { X = xrightside, Y = yupside + dzu };
                     el3.p2 = new Point() { X = xrightside, Y = yupside };
                     el3.p3 = new Point() { X = xrightside - drr, Y = yupside +dzu };
                     el3.p4 = new Point() { X = xrightside - drr, Y = yupside };
-                    elements.Add(el3);
+                    el3.dr = drr;
+                    el3.dz = -dzu;
+                    el3.r = Math.Sqrt(Math.Pow(el3.p1.X + 0.5 * drr, 2) + Math.Pow(el3.p2.Y + 0.5 * dzu, 2));
+                    supp3.Add(el3);
                     //the fourth sector
                     Element el4 = new Element();
                     el4.p1 = new Point() { X = xrightside, Y = ybottom - dzd };
                     el4.p2 = new Point() { X = xrightside, Y = ybottom };
                     el4.p3 = new Point() { X = xrightside - drr, Y = ybottom - dzd };
                     el4.p4 = new Point() { X = xrightside - drr, Y = ybottom };
-                    elements.Add(el4);
+                    el4.dr = drr;
+                    el4.dz = -dzd;
+                    el4.r = Math.Sqrt(Math.Pow(el4.p1.X + 0.5 * drr, 2) + Math.Pow(el4.p2.Y + 0.5 * dzd, 2));
+                    supp4.Add(el4);
                     //Changing deltas
                     xleftside += drl;
                     xrightside -= drr;
@@ -631,9 +624,33 @@ namespace Electric
                 drl = source.X / ksumx;
                 drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;
             }
+            // Seting elements in the right order
+            for(int j = 0; j < zparts; j++)
+            {
+                for(int i = 0; i < rparts; i++)
+                {
+                    elements.Add(supp1[i + j* rparts]);
+                }
+                for (int i = 0; i < rparts; i++)
+                {
+                    elements.Add(supp3[i + j* rparts]);
+                }
+            }
+            for (int j = 0; j < zparts; j++)
+            {
+                for (int i = 0; i < rparts; i++)
+                {
+                    elements.Add(supp2[i + j* rparts]);
+                }
+                for (int i = 0; i < rparts; i++)
+                {
+                    elements.Add(supp4[i + j * rparts]);
+                }
+            }
 
-                    // Paint
-                    GeometryDrawing myGeometryDrawing = new GeometryDrawing();
+
+            // Paint
+            GeometryDrawing myGeometryDrawing = new GeometryDrawing();
                     GeometryDrawing sourceDrawing = new GeometryDrawing();
                 GeometryGroup lines = new GeometryGroup();
                 myGeometryDrawing.Pen = new Pen(Brushes.Red, 1);

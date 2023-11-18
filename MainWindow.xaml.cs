@@ -562,7 +562,7 @@ namespace Electric
             double xleftside = 0; 
             double yupside = 0;
             double ybottom = -Convert.ToDouble(yVal.Text); 
-            double xrightside = Convert.ToDouble(xVal.Text);
+            double xrightside = Convert.ToDouble(xVal.Text);/*
             for (int i = 1; i <= Convert.ToInt32(yCrush.Text); i++)
             {
                 for (int j = 1; j <= Convert.ToInt32(xCrush.Text); j++)
@@ -571,16 +571,16 @@ namespace Electric
                     // the first sector
                     el1.p1 = new Point() { X = xleftside, Y = yupside+dzu};
                     el1.p2 = new Point() { X = xleftside, Y = yupside};
-                    el1.p3 = new Point() { X = xleftside+drl, Y = yupside+dzu};
-                    el1.p4 = new Point() { X = xleftside+drl, Y = yupside};
+                    el1.p4 = new Point() { X = xleftside+drl, Y = yupside+dzu};
+                    el1.p3 = new Point() { X = xleftside+drl, Y = yupside};
                     el1.dr = drl;
                     el1.dz = -dzu;
                     el1.r = Math.Sqrt(Math.Pow(el1.p1.X + 0.5*drl, 2) + Math.Pow(el1.p2.Y + 0.5 * dzu, 2));
                     supp1.Add(el1);
                     //the second sector
                     Element el2 = new Element();
-                    el2.p1 = new Point() { X = xleftside, Y = ybottom - dzd };
-                    el2.p2 = new Point() { X = xleftside, Y = ybottom };
+                    el2.p2 = new Point() { X = xleftside, Y = ybottom - dzd };
+                    el2.p1 = new Point() { X = xleftside, Y = ybottom };
                     el2.p3 = new Point() { X = xleftside + drl, Y = ybottom - dzd };
                     el2.p4 = new Point() { X = xleftside + drl, Y = ybottom };
                     el2.dr = drl;
@@ -589,20 +589,20 @@ namespace Electric
                     supp2.Add(el2);
                     //the third sector
                     Element el3 = new Element();
-                    el3.p1 = new Point() { X = xrightside, Y = yupside + dzu };
-                    el3.p2 = new Point() { X = xrightside, Y = yupside };
-                    el3.p3 = new Point() { X = xrightside - drr, Y = yupside +dzu };
-                    el3.p4 = new Point() { X = xrightside - drr, Y = yupside };
+                    el3.p4 = new Point() { X = xrightside, Y = yupside + dzu }; 
+                    el3.p3 = new Point() { X = xrightside, Y = yupside }; 
+                    el3.p1 = new Point() { X = xrightside - drr, Y = yupside +dzu }; 
+                    el3.p2 = new Point() { X = xrightside - drr, Y = yupside }; 
                     el3.dr = drr;
                     el3.dz = -dzu;
                     el3.r = Math.Sqrt(Math.Pow(el3.p1.X + 0.5 * drr, 2) + Math.Pow(el3.p2.Y + 0.5 * dzu, 2));
                     supp3.Add(el3);
                     //the fourth sector
                     Element el4 = new Element();
-                    el4.p1 = new Point() { X = xrightside, Y = ybottom - dzd };
-                    el4.p2 = new Point() { X = xrightside, Y = ybottom };
-                    el4.p3 = new Point() { X = xrightside - drr, Y = ybottom - dzd };
-                    el4.p4 = new Point() { X = xrightside - drr, Y = ybottom };
+                    el4.p3 = new Point() { X = xrightside, Y = ybottom - dzd }; // 3
+                    el4.p4 = new Point() { X = xrightside, Y = ybottom }; // 4
+                    el4.p2 = new Point() { X = xrightside - drr, Y = ybottom - dzd }; // 2
+                    el4.p1 = new Point() { X = xrightside - drr, Y = ybottom };
                     el4.dr = drr;
                     el4.dz = -dzd;
                     el4.r = Math.Sqrt(Math.Pow(el4.p1.X + 0.5 * drr, 2) + Math.Pow(el4.p2.Y + 0.5 * dzd, 2));
@@ -625,30 +625,53 @@ namespace Electric
                 drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;
             }
             // Seting elements in the right order
-            for(int j = 0; j < zparts; j++)
+            for(int j = 0; j < zparts ; j++)
             {
-                for(int i = 0; i < rparts; i++)
+                for(int i = 0; i < rparts ; i++)
                 {
                     elements.Add(supp1[i + j* rparts]);
                 }
-                for (int i = 0; i < rparts; i++)
+                for (int i = rparts - 1; i >= 0; i--)
                 {
                     elements.Add(supp3[i + j* rparts]);
                 }
             }
-            for (int j = 0; j < zparts; j++)
+            for (int j = zparts - 1; j >=0 ; j--)
             {
                 for (int i = 0; i < rparts; i++)
                 {
                     elements.Add(supp2[i + j* rparts]);
                 }
-                for (int i = 0; i < rparts; i++)
+                for (int i = rparts - 1; i >= 0; i--)
                 {
                     elements.Add(supp4[i + j * rparts]);
                 }
+            }*/
+
+            dr = 4; dz = 4;
+            for (int i = 1; i <= rparts; i++)
+                for (int j = 1; j <= zparts; j++)
+                {
+                    Element el = new Element();
+                    el.p1 = new Point() { X = (i - 1) * dr, Y = -j * dz };
+                    el.p2 = new Point() { X = (i - 1) * dr, Y = -(j - 1) * dz };
+                    el.p3 = new Point() { X = i * dr, Y = -j * dz };
+                    el.p4 = new Point() { X = i * dr, Y = -(j - 1) * dz };
+                    el.dr = dr;
+                    el.dz = dz;
+                    el.r = Math.Sqrt(Math.Pow((i + 0.5) * dr, 2) + Math.Pow((j + 0.5) * dz, 2));
+                    elements.Add(el);
+                }
+
+
+            string els = "";
+            foreach(var ele in elements)
+            {
+                els += ele.r.ToString() +'\t';
+                els += ele.dr.ToString() + '\t';
+                els += ele.dz.ToString() + '\n';
             }
-
-
+            System.IO.File.WriteAllText("..\\..\\print\\" + "rdrdz" + ".txt", els);
             // Paint
             GeometryDrawing myGeometryDrawing = new GeometryDrawing();
                     GeometryDrawing sourceDrawing = new GeometryDrawing();
@@ -660,10 +683,10 @@ namespace Electric
                 lines.Children.Add(new LineGeometry(new Point(e.p1.X*kr+a, -e.p1.Y*kz + graphImage.Height/2),
                     new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2)));
 
-                lines.Children.Add(new LineGeometry(new Point(e.p1.X * kr + a, -e.p1.Y * kz + graphImage.Height / 2),
+                lines.Children.Add(new LineGeometry(new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2),
                     new Point(e.p3.X * kr +a, -e.p3.Y * kz + graphImage.Height / 2)));
 
-                lines.Children.Add(new LineGeometry(new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2),
+                lines.Children.Add(new LineGeometry(new Point(e.p1.X * kr + a, -e.p1.Y * kz + graphImage.Height / 2),
                     new Point(e.p4.X * kr + a, -e.p4.Y * kz + graphImage.Height / 2)));
 
                 lines.Children.Add(new LineGeometry(new Point(e.p4.X * kr +a, -e.p4.Y * kz + graphImage.Height / 2),

@@ -53,6 +53,8 @@ namespace Electric
         DrawingGroup drawingGroup = new DrawingGroup();
         List<Element> elements;
         Element field = new Element();
+        Source source = new Source();
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -83,11 +85,6 @@ namespace Electric
             for (int i = 0; i < sizei; i++)
                 for (int j = 0; j < sizej; j++)
                 {
-                    // checking portrait and adding
-                    /*for (int k = 0; k < portrait[i, j].els.Count; k++)
-                   {
-                       //M[i, j] += Ml[portrait[i, j].els[k]][portrait[i, j].ig[k], portrait[i, j].jg[k]];
-                   }*/
                     // Go local Matrix
                     int num = portrait[i, j].n;
                     for(int k = 0; k < 4; k++)
@@ -200,10 +197,6 @@ namespace Electric
         // Changes b-vector
         private void testbconst() 
         {
-            /*for(int i = 0; i < b.Length; i++)
-            {
-                b[i] = 0;
-            }*/
             for (int i = 0; i <= sizei; i++)
                 for (int j = 0; j <= sizej; j++)
                 {
@@ -388,7 +381,7 @@ namespace Electric
                     return;
                 }
             }
-            
+            source.rz = new Point(sr, -sz);
             // Elements
             sigma = double.Parse(sigVal.Text);
             w = double.Parse(wVal.Text);
@@ -431,20 +424,49 @@ namespace Electric
                 graphImage.Source = new DrawingImage(drawingGroup);
 
                 MakeElements();
-            
+
+                 // Find source's node number
+                SetSourcen();
+                double dphi = CountPotentials();
                 //Build&Solve
                 //Re-part
                 buildMatrix();
                 b = new double[size * 2];
+              //  b[source.n] = 1;
                 buildAphi();
                 b = solveMatrix(); // Pseudo-decidion
                 printvect(b, "b");
                 q = new double[size*2];
                 q = solveMatrix(); //Real decidion
-
                 giveDecidion();
                 test();
             
+        }
+
+        // Func for source node number
+        private void SetSourcen()
+        {
+            int currn = 0;
+            int redge = Convert.ToInt32(xCrush.Text)*2;
+            int drparts = redge + 1;
+            //int zparts = Convert.ToInt32(yCrush.Text)*2;
+            foreach(var el in elements)
+            {
+                double diff = Math.Abs(Math.Abs(el.p2.X) - Math.Abs(source.rz.X));
+                diff += Math.Abs(Math.Abs(el.p2.Y) - Math.Abs(source.rz.Y));
+                if (diff < 0.0001)
+                {
+                    source.n = currn;
+                    break;
+                }
+                currn++;
+                // for right edge elements
+                if (currn % redge == 0)
+                {
+                    currn++;
+                    redge += drparts;
+                }
+            }
         }
 
         //Completing q-vector
@@ -532,11 +554,11 @@ namespace Electric
         {
             double rdis = Convert.ToDouble(rdischarge.Text);
             double zdis = Convert.ToDouble(zdischarge.Text);
-            int rparts = Convert.ToInt32(xCrush.Text);
-            int zparts = Convert.ToInt32(yCrush.Text);
-            Point zeroPoint = new Point(Convert.ToDouble(Sourcer.Text) * kr +a,  // for drawing
+            int insr = Convert.ToInt32(xCrush.Text);                              // initial step r
+            int insz = Convert.ToInt32(yCrush.Text);                              // initial step z
+            Point zeroPoint = new Point(Convert.ToDouble(Sourcer.Text) * kr +a,   // for drawing
                 graphImage.Height / 2 + Convert.ToDouble(Sourcez.Text) * kz);
-            Point source = new Point(Convert.ToDouble(Sourcer.Text),  // for counting
+            Point source = new Point(Convert.ToDouble(Sourcer.Text),              // for counting
                 -Convert.ToDouble(Sourcez.Text));
             // Maing supporting areas, look Scheme3
             List<Element> supp1 = new List<Element>();
@@ -558,112 +580,373 @@ namespace Electric
             double dzd = (-Convert.ToDouble(yVal.Text) - source.Y)/ ksumy;   // from down, < 0
             //double drl = source.X / Convert.ToDouble(xCrush.Text);                                   // from left
             double drr =(Convert.ToDouble(xVal.Text) - source.X) / ksumx;    // from right
-            //prevoius x & y lines, look Scheme 4
+            //prevoius x & y lines, look Scheme 3
             double xleftside = 0; 
             double yupside = 0;
             double ybottom = -Convert.ToDouble(yVal.Text); 
-            double xrightside = Convert.ToDouble(xVal.Text);/*
-            for (int i = 1; i <= Convert.ToInt32(yCrush.Text); i++)
-            {
-                for (int j = 1; j <= Convert.ToInt32(xCrush.Text); j++)
+            double xrightside = Convert.ToDouble(xVal.Text);
+            /*   for (int i = 1; i <= Convert.ToInt32(yCrush.Text); i++)
+               {
+                   for (int j = 1; j <= Convert.ToInt32(xCrush.Text); j++)
+                   {
+                       Element el1 = new Element();
+                       // the first sector
+                       el1.p1 = new Point() { X = xleftside, Y = yupside+dzu};
+                       el1.p2 = new Point() { X = xleftside, Y = yupside};
+                       el1.p4 = new Point() { X = xleftside+drl, Y = yupside+dzu};
+                       el1.p3 = new Point() { X = xleftside+drl, Y = yupside};
+                       el1.dr = drl;
+                       el1.dz = -dzu;
+                       el1.r = Math.Sqrt(Math.Pow(el1.p1.X + 0.5*drl, 2) + Math.Pow(el1.p2.Y + 0.5 * dzu, 2));
+                       supp1.Add(el1);
+                       //the second sector
+                       Element el2 = new Element();
+                       el2.p2 = new Point() { X = xleftside, Y = ybottom - dzd };
+                       el2.p1 = new Point() { X = xleftside, Y = ybottom };
+                       el2.p3 = new Point() { X = xleftside + drl, Y = ybottom - dzd };
+                       el2.p4 = new Point() { X = xleftside + drl, Y = ybottom };
+                       el2.dr = drl;
+                       el2.dz = -dzd;
+                       el2.r = Math.Sqrt(Math.Pow(el1.p2.X + 0.5 * drl, 2) + Math.Pow(el2.p2.Y + 0.5 * dzd, 2));
+                       supp2.Add(el2);
+                       //the third sector
+                       Element el3 = new Element();
+                       el3.p4 = new Point() { X = xrightside, Y = yupside + dzu }; 
+                       el3.p3 = new Point() { X = xrightside, Y = yupside }; 
+                       el3.p1 = new Point() { X = xrightside - drr, Y = yupside +dzu }; 
+                       el3.p2 = new Point() { X = xrightside - drr, Y = yupside }; 
+                       el3.dr = drr;
+                       el3.dz = -dzu;
+                       el3.r = Math.Sqrt(Math.Pow(el3.p1.X + 0.5 * drr, 2) + Math.Pow(el3.p2.Y + 0.5 * dzu, 2));
+                       supp3.Add(el3);
+                       //the fourth sector
+                       Element el4 = new Element();
+                       el4.p3 = new Point() { X = xrightside, Y = ybottom - dzd }; // 3
+                       el4.p4 = new Point() { X = xrightside, Y = ybottom }; // 4
+                       el4.p2 = new Point() { X = xrightside - drr, Y = ybottom - dzd }; // 2
+                       el4.p1 = new Point() { X = xrightside - drr, Y = ybottom };
+                       el4.dr = drr;
+                       el4.dz = -dzd;
+                       el4.r = Math.Sqrt(Math.Pow(el4.p1.X + 0.5 * drr, 2) + Math.Pow(el4.p2.Y + 0.5 * dzd, 2));
+                       supp4.Add(el4);
+                       //Changing deltas
+                       xleftside += drl;
+                       xrightside -= drr;
+                       drl *= rdis;
+                       drr *= rdis;
+
+                   }
+                   yupside += dzu;
+                   ybottom -= dzd;
+                   dzu *= zdis;
+                   dzd *= zdis;
+                   xleftside = 0;
+                   xrightside = Convert.ToDouble(xVal.Text);
+                   // Recovering deltas for x-coords changing
+                   drl = source.X / ksumx;
+                   drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;
+               }*/
+
+            // Making discharged steps
+            int zparts = 0;
+            int rparts = 0;
+           /* double elr = source.X;
+            double elz = source.Y;*/
+
+            Point p3 = source;
+            Point p4 = new Point() { X = source.X, Y = source.Y + insz};
+            Point p2 = new Point() { X = source.X - insr, Y = source.Y +insz};
+            Point p1 = new Point() { X = source.X - insr, Y = source.Y };
+            double rst = insr;
+            double zst = insz;
+            int rpartsleft;
+            int zpartsup = 0;
+            // Making elements in the first area
+            while (p2.Y <= 0)
+            {  
+                while (p1.X >= 0 )
                 {
                     Element el1 = new Element();
-                    // the first sector
-                    el1.p1 = new Point() { X = xleftside, Y = yupside+dzu};
-                    el1.p2 = new Point() { X = xleftside, Y = yupside};
-                    el1.p4 = new Point() { X = xleftside+drl, Y = yupside+dzu};
-                    el1.p3 = new Point() { X = xleftside+drl, Y = yupside};
-                    el1.dr = drl;
-                    el1.dz = -dzu;
-                    el1.r = Math.Sqrt(Math.Pow(el1.p1.X + 0.5*drl, 2) + Math.Pow(el1.p2.Y + 0.5 * dzu, 2));
+                    el1.p1 = p1;
+                    el1.p2 = p2;
+                    el1.p4 = p4;
+                    el1.p3 = p3;
                     supp1.Add(el1);
-                    //the second sector
-                    Element el2 = new Element();
-                    el2.p2 = new Point() { X = xleftside, Y = ybottom - dzd };
-                    el2.p1 = new Point() { X = xleftside, Y = ybottom };
-                    el2.p3 = new Point() { X = xleftside + drl, Y = ybottom - dzd };
-                    el2.p4 = new Point() { X = xleftside + drl, Y = ybottom };
-                    el2.dr = drl;
-                    el2.dz = -dzd;
-                    el2.r = Math.Sqrt(Math.Pow(el1.p2.X + 0.5 * drl, 2) + Math.Pow(el2.p2.Y + 0.5 * dzd, 2));
-                    supp2.Add(el2);
-                    //the third sector
-                    Element el3 = new Element();
-                    el3.p4 = new Point() { X = xrightside, Y = yupside + dzu }; 
-                    el3.p3 = new Point() { X = xrightside, Y = yupside }; 
-                    el3.p1 = new Point() { X = xrightside - drr, Y = yupside +dzu }; 
-                    el3.p2 = new Point() { X = xrightside - drr, Y = yupside }; 
-                    el3.dr = drr;
-                    el3.dz = -dzu;
-                    el3.r = Math.Sqrt(Math.Pow(el3.p1.X + 0.5 * drr, 2) + Math.Pow(el3.p2.Y + 0.5 * dzu, 2));
-                    supp3.Add(el3);
-                    //the fourth sector
-                    Element el4 = new Element();
-                    el4.p3 = new Point() { X = xrightside, Y = ybottom - dzd }; // 3
-                    el4.p4 = new Point() { X = xrightside, Y = ybottom }; // 4
-                    el4.p2 = new Point() { X = xrightside - drr, Y = ybottom - dzd }; // 2
-                    el4.p1 = new Point() { X = xrightside - drr, Y = ybottom };
-                    el4.dr = drr;
-                    el4.dz = -dzd;
-                    el4.r = Math.Sqrt(Math.Pow(el4.p1.X + 0.5 * drr, 2) + Math.Pow(el4.p2.Y + 0.5 * dzd, 2));
-                    supp4.Add(el4);
-                    //Changing deltas
-                    xleftside += drl;
-                    xrightside -= drr;
-                    drl *= rdis;
-                    drr *= rdis;
-                    
+                    // itteration
+                    rst *= rdis;
+                    p3 = p1;
+                    p4 = p2;
+                    p1.X -= rst;
+                    p2.X -= rst;
+                    el1.dr = 1;
+                    // borders
+                   /* if(p1.X < 0) p1.X = 0;
+                    if(p2.X < 0) p2.X = 0;*/
                 }
-                yupside += dzu;
-                ybottom -= dzd;
-                dzu *= zdis;
-                dzd *= zdis;
-                xleftside = 0;
-                xrightside = Convert.ToDouble(xVal.Text);
-                // Recovering deltas for x-coords changing
-                drl = source.X / ksumx;
-                drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;
+                // left border
+                int last = supp1.Count - 1;
+                if (supp1[last].p1.X > 0)
+                {
+                    var pb = supp1[last].p1;
+                    pb.X = 0;
+                    supp1[last].p1 = pb;
+                    pb = supp1[last].p2;
+                    pb.X = 0;
+                    supp1[last].p2= pb;
+                }
+                // next row
+                rst = insr;
+                p3.X = source.X;
+                p3.Y += zst;
+                p1 = p3;
+                p1.X -= rst;
+                zst *= zdis;
+                p4 = p3;
+                p4.Y += zst;
+                p2 = p4;
+                p2.X -= rst;
+                zpartsup++;
             }
+            // up border
+            rpartsleft = supp1.Count / zpartsup;
+            if (supp1[supp1.Count - 1].p2.Y < 0)
+            {
+                for (int i = 0; i < rpartsleft; i++)
+                {
+                    int ind = supp1.Count - 1 - i;
+                    var pb = supp1[ind].p2;
+                    pb.Y = 0;
+                    supp1[ind].p2 = pb;
+                    pb = supp1[ind].p4;
+                    pb.Y = 0;
+                    supp1[ind].p4 = pb;
+                }
+            }
+
+            // Making elements in the second area
+            p4 = source;
+            p3 = new Point() { X = source.X, Y = source.Y - insz };
+            p1 = new Point() { X = source.X - insr, Y = source.Y - insz };
+            p2 = new Point() { X = source.X - insr, Y = source.Y};
+            zst = insz;
+            rst = insr;
+            int zpartsdown = 0;
+
+            while (p1.Y >= -Convert.ToDouble(yVal.Text))
+            {
+                while (p1.X >= 0)
+                {
+                    Element el1 = new Element();
+                    el1.p1 = p1;
+                    el1.p2 = p2;
+                    el1.p4 = p4;
+                    el1.p3 = p3;
+                    supp2.Add(el1);
+                    // itteration
+                    rst *= rdis;
+                    p3 = p1;
+                    p4 = p2;
+                    p1.X -= rst;
+                    p2.X -= rst;
+                    el1.dr = 1;
+                }
+                // left border
+                int last = supp2.Count - 1;
+                if (supp2[last].p1.X > 0)
+                {
+                    var pb = supp2[last].p1;
+                    pb.X = 0;
+                    supp2[last].p1 = pb;
+                    pb = supp2[last].p2;
+                    pb.X = 0;
+                    supp2[last].p2 = pb;
+                }
+                // next row
+                rst = insr;
+                p4.X = source.X;
+                p4.Y -= zst;
+                p2 = p4;
+                p2.X -= rst;
+                zst *= zdis;
+                p3 = p4;
+                p3.Y -= zst;
+                p1 = p3;
+                p1.X -= rst;
+                zpartsdown++;
+            }
+            // down border
+            if (supp2[supp2.Count - 1].p1.Y > -Convert.ToDouble(yVal.Text))
+            {
+                for (int i = 0; i < rpartsleft; i++)
+                {
+                    int ind = supp2.Count - 1 - i;
+                    var pb = supp2[ind].p1;
+                    pb.Y = -Convert.ToDouble(yVal.Text);
+                    supp2[ind].p1 = pb;
+                    pb = supp2[ind].p3;
+                    pb.Y = -Convert.ToDouble(yVal.Text);
+                    supp2[ind].p3 = pb;
+                }
+            }
+
+            // Making elements in the third area
+            p1 = source;
+            p4 = new Point() { X = source.X + insr, Y = source.Y + insz };
+            p2 = new Point() { X = source.X , Y = source.Y + insz };
+            p3 = new Point() { X = source.X + insr, Y = source.Y };
+            zst = insz;
+            rst = insr;
+            int rpartsright;
+
+            while (p2.Y <= 0)
+            {
+                while (p4.X <= Convert.ToDouble(xVal.Text))
+                {
+                    Element el1 = new Element();
+                    el1.p1 = p1;
+                    el1.p2 = p2;
+                    el1.p4 = p4;
+                    el1.p3 = p3;
+                    supp3.Add(el1);
+                    // itteration
+                    rst *= rdis;
+                    p1 = p3;
+                    p2 = p4;
+                    p3.X += rst;
+                    p4.X += rst;
+                    el1.dr = 1;
+                }
+                // right border
+                int last = supp3.Count - 1;
+                if (supp3[last].p4.X < Convert.ToDouble(xVal.Text))
+                {
+                    var pb = supp3[last].p4;
+                    pb.X = Convert.ToDouble(xVal.Text);
+                    supp3[last].p4 = pb;
+                    pb = supp3[last].p3;
+                    pb.X = Convert.ToDouble(xVal.Text);
+                    supp3[last].p3 = pb;
+                }
+                // next row
+                rst = insr;
+                p1.X = source.X;
+                p1.Y += zst;
+                p3 = p1;
+                p3.X += rst;
+                zst *= zdis;
+                p2 = p1;
+                p2.Y += zst;
+                p4 = p2;
+                p4.X += rst;
+            }
+            rpartsright = supp3.Count / zpartsup;
+            // up border
+            if (supp3[supp3.Count - 1].p2.Y < 0)
+            {
+                for (int i = 0; i < rpartsleft; i++)
+                {
+                    int ind = supp3.Count - 1 - i;
+                    var pb = supp3[ind].p2;
+                    pb.Y = 0;
+                    supp3[ind].p2 = pb;
+                    pb = supp3[ind].p4;
+                    pb.Y = 0;
+                    supp3[ind].p4 = pb;
+                }
+            }
+
+            // Making elements in the fourth area
+            p2 = source;
+            p4 = new Point() { X = source.X + insr, Y = source.Y};
+            p1 = new Point() { X = source.X, Y = source.Y - insz };
+            p3 = new Point() { X = source.X + insr, Y = source.Y - insz };
+            zst = insz;
+            rst = insr;
+
+            while (p1.Y >= -Convert.ToDouble(yVal.Text))
+            {
+                while (p3.X <= Convert.ToDouble(xVal.Text))
+                {
+                    Element el1 = new Element();
+                    el1.p1 = p1;
+                    el1.p2 = p2;
+                    el1.p4 = p4;
+                    el1.p3 = p3;
+                    supp4.Add(el1);
+                    // itteration
+                    rst *= rdis;
+                    p1 = p3;
+                    p2 = p4;
+                    p3.X += rst;
+                    p4.X += rst;
+                    el1.dr = 1;
+                }
+                // right border
+                int last = supp4.Count - 1;
+                if (supp4[last].p3.X < Convert.ToDouble(xVal.Text))
+                {
+                    var pb = supp4[last].p3;
+                    pb.X = Convert.ToDouble(xVal.Text);
+                    supp4[last].p3 = pb;
+                    pb = supp4[last].p4;
+                    pb.X = Convert.ToDouble(xVal.Text);
+                    supp4[last].p4 = pb;
+                }
+                // next row
+                rst = insr;
+                p2.X = source.X;
+                p2.Y -= zst;
+                zst *= zdis;
+                p4 = p2;
+                p4.X += rst;
+                p1 = p2;
+                p1.Y -= zst;
+                p3 = p4;
+                p3.Y += zst;
+            }
+            // down border
+            if (supp4[supp4.Count - 1].p1.Y > -Convert.ToDouble(yVal.Text))
+            {
+                for (int i = 0; i < rpartsleft; i++)
+                {
+                    int ind = supp4.Count - 1 - i;
+                    var pb = supp4[ind].p1;
+                    pb.Y = -Convert.ToDouble(yVal.Text);
+                    supp4[ind].p1 = pb;
+                    pb = supp4[ind].p3;
+                    pb.Y = -Convert.ToDouble(yVal.Text);
+                    supp4[ind].p3 = pb;
+                }
+            }
+
             // Seting elements in the right order
-            for(int j = 0; j < zparts ; j++)
+            for (int j = 0; j < zpartsup ; j++)
             {
-                for(int i = 0; i < rparts ; i++)
+                for(int i = 0; i < rpartsleft ; i++)
                 {
-                    elements.Add(supp1[i + j* rparts]);
+                    elements.Add(supp1[i + j* rpartsleft]);
                 }
-                for (int i = rparts - 1; i >= 0; i--)
+                for (int i = rpartsright - 1; i >= 0; i--)
                 {
-                    elements.Add(supp3[i + j* rparts]);
+                    elements.Add(supp3[i + j* rpartsright]);
                 }
             }
-            for (int j = zparts - 1; j >=0 ; j--)
+            for (int j = zpartsdown - 1; j >=0 ; j--)
             {
-                for (int i = 0; i < rparts; i++)
+                for (int i = 0; i < rpartsleft; i++)
                 {
-                    elements.Add(supp2[i + j* rparts]);
+                    elements.Add(supp2[i + j* rpartsleft]);
                 }
-                for (int i = rparts - 1; i >= 0; i--)
+                for (int i = rpartsright - 1; i >= 0; i--)
                 {
-                    elements.Add(supp4[i + j * rparts]);
+                    elements.Add(supp4[i + j * rpartsright]);
                 }
-            }*/
+            }
 
-            dr = 4; dz = 4;
-            for (int i = 1; i <= rparts; i++)
-                for (int j = 1; j <= zparts; j++)
-                {
-                    Element el = new Element();
-                    el.p1 = new Point() { X = (i - 1) * dr, Y = -j * dz };
-                    el.p2 = new Point() { X = (i - 1) * dr, Y = -(j - 1) * dz };
-                    el.p3 = new Point() { X = i * dr, Y = -j * dz };
-                    el.p4 = new Point() { X = i * dr, Y = -(j - 1) * dz };
-                    el.dr = dr;
-                    el.dz = dz;
-                    el.r = Math.Sqrt(Math.Pow((i + 0.5) * dr, 2) + Math.Pow((j + 0.5) * dz, 2));
-                    elements.Add(el);
-                }
-
-
+            //sizes
+            sizei = rpartsleft + rpartsright;
+            sizej = zpartsdown+zpartsup;
+            /*
             string els = "";
             foreach(var ele in elements)
             {
@@ -671,25 +954,25 @@ namespace Electric
                 els += ele.dr.ToString() + '\t';
                 els += ele.dz.ToString() + '\n';
             }
-            System.IO.File.WriteAllText("..\\..\\print\\" + "rdrdz" + ".txt", els);
+            System.IO.File.WriteAllText("..\\..\\print\\" + "rdrdz" + ".txt", els);*/
             // Paint
             GeometryDrawing myGeometryDrawing = new GeometryDrawing();
                     GeometryDrawing sourceDrawing = new GeometryDrawing();
                 GeometryGroup lines = new GeometryGroup();
                 myGeometryDrawing.Pen = new Pen(Brushes.Red, 1);
                 sourceDrawing.Pen = new Pen(Brushes.Blue, 1);
-               foreach(var e in elements)
+            foreach(var e in elements)
             {
                 lines.Children.Add(new LineGeometry(new Point(e.p1.X*kr+a, -e.p1.Y*kz + graphImage.Height/2),
                     new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2)));
 
-                lines.Children.Add(new LineGeometry(new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2),
+                lines.Children.Add(new LineGeometry(new Point(e.p4.X * kr + a, -e.p4.Y * kz + graphImage.Height / 2),
                     new Point(e.p3.X * kr +a, -e.p3.Y * kz + graphImage.Height / 2)));
 
-                lines.Children.Add(new LineGeometry(new Point(e.p1.X * kr + a, -e.p1.Y * kz + graphImage.Height / 2),
+                lines.Children.Add(new LineGeometry(new Point(e.p2.X * kr + a, -e.p2.Y * kz + graphImage.Height / 2),
                     new Point(e.p4.X * kr + a, -e.p4.Y * kz + graphImage.Height / 2)));
 
-                lines.Children.Add(new LineGeometry(new Point(e.p4.X * kr +a, -e.p4.Y * kz + graphImage.Height / 2),
+                lines.Children.Add(new LineGeometry(new Point(e.p1.X * kr +a, -e.p1.Y * kz + graphImage.Height / 2),
                     new Point(e.p3.X * kr +a, -e.p3.Y * kz + graphImage.Height / 2)));
             }
                 drawingGroup.Children.Add(myGeometryDrawing);
@@ -704,9 +987,9 @@ namespace Electric
             drawingGroup.Children.Add(sourceDrawing);
             graphImage.Source = new DrawingImage(drawingGroup);
             
-
-            sizej = int.Parse(xCrush.Text);
-            sizei = int.Parse(yCrush.Text);
+            // Matrixes sizes
+            /*sizej = int.Parse(xCrush.Text) * 2;
+            sizei = int.Parse(yCrush.Text) * 2;*/
             int n = 0;
             Nods = new int[sizei + 1, sizej + 1];
             for (int i = 0; i <= sizei; i++)
@@ -715,6 +998,34 @@ namespace Electric
                     Nods[i, j] = n;
                     n++;
                 }
+        }
+
+        // Forming source
+        private double CountPotentials()
+        {
+            // Physical values
+            double J = 0.7;                                         // A
+            double f = 1;                                           // MHz
+            double myu = 4 * Math.PI * Math.Pow(10, -7);            // H/m
+            double L1 = -source.rz.Y;                               // m
+            double L2 = source.rz.Y + Convert.ToDouble(yVal.Text);  // m
+            double ro = 1000;                                       // kg/m^3
+
+            // Coils
+            Coil I1 = new Coil() { n = 100, S = 0.002};
+            Coil I2 = new Coil() { n = 200, S = 0.003 };
+            Coil G = new Coil() { n = 150, S = 0.001 };
+            I1.M = I1.S*I1.n;
+            I2.M = I2.S*I2.n;
+            G.M = G.S*G.n*J;
+
+            // Count
+            double p1 = Math.Sqrt(Math.PI * f * myu / ro) * L1;
+            double dL = L1 - L2;
+            double deltaL = dL / L1;
+            double dphi = p1 * deltaL;
+            dphi -= Math.Atan(p1 * deltaL / (1 + p1*(2 - deltaL) + 2*p1*p1*(1 - deltaL)));
+            return dphi;
         }
 
         // Multyplier
@@ -819,13 +1130,13 @@ namespace Electric
         {
             double mr = e.GetPosition(graphImage).X;
             double mz = e.GetPosition(graphImage).Y;
-            double nr = 0;
-            double nz = 0;
+            double nr;
+            double nz;
             for (int i = 0; i <= sizei; i++)
                 for (int j = 0; j <= sizej; j++)
                 
                 {
-                     nr = dr * kr * j;
+                     nr = dr * kr * j;      ///kx^...
                      nz = graphImage.Height / 2 + dz * kz * i;
                     if (nr - 3 < mr && nr + 3 > mr)
                     {
@@ -882,5 +1193,16 @@ namespace Electric
         public int n;
         public List<int> els = new List<int>();
         
+    }
+    public class Source
+    {
+        public Point rz;
+        public int n;
+    }
+    public class Coil
+    {
+        public int n;
+        public double S;
+        public double M;
     }
 }

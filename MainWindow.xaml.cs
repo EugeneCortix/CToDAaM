@@ -246,19 +246,6 @@ namespace Electric
             qtest = solveMatrix();
             printvect(qtest, "qtest");
 
-            /*  // Checking error
-              // first, get THAT b
-              buildAphi();
-              buildA();
-              b = solveMatrix();
-              testbconst();
-
-              // second, prepare matrix and find error
-              buildAtest();
-              qtest = mult(A, qtest);
-              qtest = divide(qtest, b);
-              printvect(qtest, "check");*/
-
             // f = r
             buildAphi();
             buildA();
@@ -581,77 +568,8 @@ namespace Electric
             //double drl = source.X / Convert.ToDouble(xCrush.Text);                                   // from left
             double drr =(Convert.ToDouble(xVal.Text) - source.X) / ksumx;    // from right
             //prevoius x & y lines, look Scheme 3
-            double xleftside = 0; 
-            double yupside = 0;
             double ybottom = -Convert.ToDouble(yVal.Text); 
             double xrightside = Convert.ToDouble(xVal.Text);
-            /*   for (int i = 1; i <= Convert.ToInt32(yCrush.Text); i++)
-               {
-                   for (int j = 1; j <= Convert.ToInt32(xCrush.Text); j++)
-                   {
-                       Element el1 = new Element();
-                       // the first sector
-                       el1.p1 = new Point() { X = xleftside, Y = yupside+dzu};
-                       el1.p2 = new Point() { X = xleftside, Y = yupside};
-                       el1.p4 = new Point() { X = xleftside+drl, Y = yupside+dzu};
-                       el1.p3 = new Point() { X = xleftside+drl, Y = yupside};
-                       el1.dr = drl;
-                       el1.dz = -dzu;
-                       el1.r = Math.Sqrt(Math.Pow(el1.p1.X + 0.5*drl, 2) + Math.Pow(el1.p2.Y + 0.5 * dzu, 2));
-                       supp1.Add(el1);
-                       //the second sector
-                       Element el2 = new Element();
-                       el2.p2 = new Point() { X = xleftside, Y = ybottom - dzd };
-                       el2.p1 = new Point() { X = xleftside, Y = ybottom };
-                       el2.p3 = new Point() { X = xleftside + drl, Y = ybottom - dzd };
-                       el2.p4 = new Point() { X = xleftside + drl, Y = ybottom };
-                       el2.dr = drl;
-                       el2.dz = -dzd;
-                       el2.r = Math.Sqrt(Math.Pow(el1.p2.X + 0.5 * drl, 2) + Math.Pow(el2.p2.Y + 0.5 * dzd, 2));
-                       supp2.Add(el2);
-                       //the third sector
-                       Element el3 = new Element();
-                       el3.p4 = new Point() { X = xrightside, Y = yupside + dzu }; 
-                       el3.p3 = new Point() { X = xrightside, Y = yupside }; 
-                       el3.p1 = new Point() { X = xrightside - drr, Y = yupside +dzu }; 
-                       el3.p2 = new Point() { X = xrightside - drr, Y = yupside }; 
-                       el3.dr = drr;
-                       el3.dz = -dzu;
-                       el3.r = Math.Sqrt(Math.Pow(el3.p1.X + 0.5 * drr, 2) + Math.Pow(el3.p2.Y + 0.5 * dzu, 2));
-                       supp3.Add(el3);
-                       //the fourth sector
-                       Element el4 = new Element();
-                       el4.p3 = new Point() { X = xrightside, Y = ybottom - dzd }; // 3
-                       el4.p4 = new Point() { X = xrightside, Y = ybottom }; // 4
-                       el4.p2 = new Point() { X = xrightside - drr, Y = ybottom - dzd }; // 2
-                       el4.p1 = new Point() { X = xrightside - drr, Y = ybottom };
-                       el4.dr = drr;
-                       el4.dz = -dzd;
-                       el4.r = Math.Sqrt(Math.Pow(el4.p1.X + 0.5 * drr, 2) + Math.Pow(el4.p2.Y + 0.5 * dzd, 2));
-                       supp4.Add(el4);
-                       //Changing deltas
-                       xleftside += drl;
-                       xrightside -= drr;
-                       drl *= rdis;
-                       drr *= rdis;
-
-                   }
-                   yupside += dzu;
-                   ybottom -= dzd;
-                   dzu *= zdis;
-                   dzd *= zdis;
-                   xleftside = 0;
-                   xrightside = Convert.ToDouble(xVal.Text);
-                   // Recovering deltas for x-coords changing
-                   drl = source.X / ksumx;
-                   drr = (Convert.ToDouble(xVal.Text) - source.X) / ksumx;
-               }*/
-
-            // Making discharged steps
-            int zparts = 0;
-            int rparts = 0;
-           /* double elr = source.X;
-            double elz = source.Y;*/
 
             Point p3 = source;
             Point p4 = new Point() { X = source.X, Y = source.Y + insz};
@@ -945,7 +863,7 @@ namespace Electric
             }
 
             // Seting elements in the right order
-            for (int j = 0; j < zpartsup ; j++)
+            for (int j = zpartsup - 1; j >=0  ; j--)
             {
                 for (int i = rpartsleft - 1; i >= 0; i--)
                 {
@@ -956,7 +874,7 @@ namespace Electric
                     elements.Add(supp3[i + j * rpartsright]);
                 }
             }
-            for (int j = zpartsdown - 1; j >=0 ; j--)
+            for (int j = 0; j < zpartsdown ; j++)
             {
                 for (int i = rpartsleft - 1; i >= 0; i--)
                 {
@@ -1082,9 +1000,6 @@ namespace Electric
             int nSLAE = b.Length;
             if (ans.Length != nSLAE)
                 throw new Exception("Size of the input array is not compatable with size of SLAE");
-
-
-
 
             for (int i = 0; i < nSLAE; i++)
             {

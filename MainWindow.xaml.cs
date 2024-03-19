@@ -661,6 +661,7 @@ namespace Electric
             double zst = insz;
             int rpartsleft;
             int zpartsup = 0;
+            double rd, zd;
             // Making elements in the first area
             while (p2.Y <= 0)
             {  
@@ -671,6 +672,13 @@ namespace Electric
                     el1.p2 = p2;
                     el1.p4 = p4;
                     el1.p3 = p3;
+
+                    el1.dr = p4.X - p2.X;
+                    el1.dz = p4.Y - p3.Y;
+                    rd = Math.Abs(source.X - p2.X) - 0.5*el1.dr;
+                    zd = Math.Abs(source.Y -  p2.Y) - 0.5*el1.dz; 
+                    el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
+
                     supp1.Add(el1);
                     // itteration
                     rst *= rdis;
@@ -678,10 +686,6 @@ namespace Electric
                     p4 = p2;
                     p1.X -= rst;
                     p2.X -= rst;
-                    el1.dr = 1;
-                    // borders
-                   /* if(p1.X < 0) p1.X = 0;
-                    if(p2.X < 0) p2.X = 0;*/
                 }
                 // left border
                 int last = supp1.Count - 1;
@@ -741,6 +745,13 @@ namespace Electric
                     el1.p2 = p2;
                     el1.p4 = p4;
                     el1.p3 = p3;
+
+                    el1.dr = p4.X - p2.X;
+                    el1.dz = p4.Y - p3.Y;
+                    rd = Math.Abs(source.X - p2.X) - 0.5 * el1.dr;
+                    zd = Math.Abs(source.Y - p2.Y) + 0.5 * el1.dz;
+                    el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
+
                     supp2.Add(el1);
                     // itteration
                     rst *= rdis;
@@ -807,6 +818,13 @@ namespace Electric
                     el1.p2 = p2;
                     el1.p4 = p4;
                     el1.p3 = p3;
+
+                    el1.dr = p4.X - p2.X;
+                    el1.dz = p4.Y - p3.Y;
+                    rd = Math.Abs(source.X - p2.X) + 0.5 * el1.dr;
+                    zd = Math.Abs(source.Y - p2.Y) - 0.5 * el1.dz;
+                    el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
+
                     supp3.Add(el1);
                     // itteration
                     rst *= rdis;
@@ -872,6 +890,13 @@ namespace Electric
                     el1.p2 = p2;
                     el1.p4 = p4;
                     el1.p3 = p3;
+
+                    el1.dr = p4.X - p2.X;
+                    el1.dz = p4.Y - p3.Y;
+                    rd = Math.Abs(source.X - p2.X) + 0.5 * el1.dr;
+                    zd = Math.Abs(source.Y - p2.Y) + 0.5 * el1.dz;
+                    el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
+
                     supp4.Add(el1);
                     // itteration
                     rst *= rdis;
@@ -902,7 +927,7 @@ namespace Electric
                 p1 = p2;
                 p1.Y -= zst;
                 p3 = p4;
-                p3.Y += zst;
+                p3.Y -= zst;
             }
             // down border
             if (supp4[supp4.Count - 1].p1.Y > -Convert.ToDouble(yVal.Text))
@@ -922,39 +947,32 @@ namespace Electric
             // Seting elements in the right order
             for (int j = 0; j < zpartsup ; j++)
             {
-                for(int i = 0; i < rpartsleft ; i++)
+                for (int i = rpartsleft - 1; i >= 0; i--)
                 {
                     elements.Add(supp1[i + j* rpartsleft]);
                 }
-                for (int i = rpartsright - 1; i >= 0; i--)
+                for (int i = 0; i < rpartsright; i++)
                 {
-                    elements.Add(supp3[i + j* rpartsright]);
+                    elements.Add(supp3[i + j * rpartsright]);
                 }
             }
             for (int j = zpartsdown - 1; j >=0 ; j--)
             {
-                for (int i = 0; i < rpartsleft; i++)
+                for (int i = rpartsleft - 1; i >= 0; i--)
                 {
-                    elements.Add(supp2[i + j* rpartsleft]);
+                    elements.Add(supp2[i + j * rpartsleft]);
                 }
-                for (int i = rpartsright - 1; i >= 0; i--)
+                for (int i = 0; i < rpartsright; i++)
                 {
                     elements.Add(supp4[i + j * rpartsright]);
                 }
             }
 
             //sizes
+            // for matrixes
             sizei = rpartsleft + rpartsright;
             sizej = zpartsdown+zpartsup;
-            /*
-            string els = "";
-            foreach(var ele in elements)
-            {
-                els += ele.r.ToString() +'\t';
-                els += ele.dr.ToString() + '\t';
-                els += ele.dz.ToString() + '\n';
-            }
-            System.IO.File.WriteAllText("..\\..\\print\\" + "rdrdz" + ".txt", els);*/
+
             // Paint
             GeometryDrawing myGeometryDrawing = new GeometryDrawing();
                     GeometryDrawing sourceDrawing = new GeometryDrawing();

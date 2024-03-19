@@ -82,8 +82,8 @@ namespace Electric
             // Global M
             size = (sizei + 1) * (sizej + 1);
             M = new double[size, size]; // Size = number of nodes * number of nodes
-            for (int i = 0; i < sizei; i++)
-                for (int j = 0; j < sizej; j++)
+            for (int i = 0; i < sizej; i++)
+                for (int j = 0; j < sizei; j++)
                 {
                     // Go local Matrix
                     int num = portrait[i, j].n;
@@ -99,8 +99,8 @@ namespace Electric
 
             // Global G
             G = new double[size, size];
-            for (int i = 0; i < sizei; i++)
-                for (int j = 0; j < sizej; j++)
+            for (int i = 0; i < sizej; i++)
+                for (int j = 0; j < sizei; j++)
                 {
                     // Go local Matrix
                     int num = portrait[i, j].n;
@@ -174,8 +174,8 @@ namespace Electric
             
             buildA();
             // Inserting requred values
-            for (int i = 0; i <= sizei; i++)
-                for (int j = 0; j <= sizej; j++)
+            for (int i = 0; i <= sizej; i++)
+                for (int j = 0; j <= sizei; j++)
                 {
                     if (i == 0 || j == 0 || i == sizei || j == sizej)
                     {
@@ -197,8 +197,8 @@ namespace Electric
         // Changes b-vector
         private void testbconst() 
         {
-            for (int i = 0; i <= sizei; i++)
-                for (int j = 0; j <= sizej; j++)
+            for (int i = 0; i <= sizej; i++)
+                for (int j = 0; j <= sizei; j++)
                 {
                     if (i == 0 || j == 0 || i == sizei || j == sizej)
                     {
@@ -212,8 +212,8 @@ namespace Electric
         {
             double drr = double.Parse(xVal.Text) / sizei;
             double drz = double.Parse(yVal.Text) / sizej;
-            for (int i = 0; i <= sizei; i++)
-                for (int j = 0; j <= sizej; j++)
+            for (int i = 0; i <= sizej; i++)
+                for (int j = 0; j <= sizei; j++)
                 {
                     if (i == 0 || j == 0 || i == sizei || j == sizej)
                     {
@@ -507,10 +507,10 @@ namespace Electric
         private void buildPortrait()
         {
             
-            portrait = new img[sizei, sizej];
+            portrait = new img[sizej, sizei];
             int num = 0;
-            for(int i = 0; i < sizei;i++)
-                for (int j = 0;j < sizej; j++)
+            for(int i = 0; i < sizej;i++)
+                for (int j = 0;j < sizei; j++)
                 {
                     img im = new img();
                     im.n = num;
@@ -519,13 +519,13 @@ namespace Electric
                 }
             
             // Search and add elements to corresponding nodes
-            for (int i = 0; i < sizei; i++)
-                for (int j = 0; j < sizej; j++)
+            for (int i = 0; i < sizej; i++)
+                for (int j = 0; j < sizei; j++)
                 { 
                     // Define nodes
                     int n2 = portrait[i, j].n + i; // 2
                     int n3 = n2+1; // 3
-                    int n0 = n2+(sizej +1); // 0
+                    int n0 = n2+(sizei +1); // 0
                     int n1 = n0 + 1; // 1
 
                     // Add nodes in the order
@@ -927,9 +927,9 @@ namespace Electric
             /*sizej = int.Parse(xCrush.Text) * 2;
             sizei = int.Parse(yCrush.Text) * 2;*/
             int n = 0;
-            Nods = new int[sizei + 1, sizej + 1];
-            for (int i = 0; i <= sizei; i++)
-                for (int j = 0; j <= sizej; j++)
+            Nods = new int[sizej + 1, sizei + 1];
+            for (int i = 0; i <= sizej; i++)
+                for (int j = 0; j <= sizei; j++)
                 {
                     Nods[i, j] = n;
                     n++;

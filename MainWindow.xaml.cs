@@ -964,29 +964,6 @@ namespace Electric
             return dphi;
         }
 
-        // Multyplier
-        private double[] mult(double[,] mat, double[] vect)
-        {
-            double[]res = new double[vect.Length];
-
-            for(int k = 0; k < vect.Length; k++)
-            {
-                for (int i = 0; i < vect.Length; i++)
-                {
-                    res[k] += mat[k, i] * vect[i];
-                }
-            }
-
-            return res;
-        }
-        private double[] divide(double[] vect1, double[] vect2)
-        {
-            for (int k = 0; k < vect1.Length; k++)
-            {
-                vect1[k] -= vect2[k];
-            }
-            return vect1;
-        }
         // Gauss solver
         private double[] solveMatrix()
         {

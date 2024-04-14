@@ -274,52 +274,45 @@ namespace Electric
 
         private void buildlocal() 
         {
-            // p. 233, 5.22 & 5.23
-            double[,] Gx = new double[2,2];
-            Gx[0, 0] = 1 / elements[0].dr;
-            Gx[0, 1] = -1 / elements[0].dr;
-            Gx[1, 0] = -1 / elements[0].dr;
-            Gx[1, 1] = 1 / elements[0].dr;
-
-            double[,] Gy = new double[2, 2];
-            Gy[0, 0] = 1 / elements[0].dz;
-            Gy[0, 1] = -1 / elements[0].dz;
-            Gy[1, 0] = -1 / elements[0].dz;
-            Gy[1, 1] = 1 / elements[0].dz;
-
-            double[,] Mx = new double[2, 2];
-            Mx[0, 0] = 2 * elements[0].dr / 6;
-            Mx[0, 1] = elements[0].dr/6;
-            Mx[1, 0] = elements[0].dr/6;
-            Mx[1, 1] = 2 * elements[0].dr/6;
-
-            double[,] My = new double[2, 2];
-            My[0, 0] = 2 * elements[0].dz / 6;
-            My[0, 1] = elements[0].dz / 6;
-            My[1, 0] = elements[0].dz / 6;
-            My[1, 1] = 2 * elements[0].dz / 6;
-
+            
             //G local
             Gl = new List<double[,]>();
             foreach (var element in elements)
             {
+
+                // p. 193
+                double[,] Ghr = new double[2, 2];
+                double koef = element.lambda*(element.dr+element.dz/2)/element.dz;
+                Ghr[0, 0] = koef;
+                Ghr[0, 1] = -koef;
+                Ghr[1, 0] = -koef;
+                Ghr[1, 1] = -koef;
+
+                // p. 194
+                double[,] Mhr = new double[2, 2];
+                double koef2 = element.sigma * element.dz / 6;
+                Mhr[0, 0] = koef2*(2*element.dr + element.dz/2);
+                Mhr[0, 1] = koef2 * (element.dr + element.dz / 2);
+                Mhr[1, 0] = koef2 * ( element.dr + element.dz / 2);
+                Mhr[1, 1] = koef2 * (2 * element.dr + 3*element.dz / 2);
+
                 double[,] Gloc = new double[4, 4];
-                Gloc[0, 0] = element.lambda * (Gx[0, 0] * My[0,0] + Mx[0, 0] * Gy[0,0]);
-                Gloc[0, 1] = element.lambda * (Gx[0, 1] * My[0,0] + Mx[0, 1] * Gy[0,0]);
-                Gloc[0, 2] = element.lambda * (Gx[0, 0] * My[0,1] + Mx[0, 0] * Gy[0,1]);
-                Gloc[0, 3] = element.lambda * (Gx[0, 1] * My[0, 1] + Mx[0, 1] * Gy[0, 1]);
+                Gloc[0, 0] = element.lambda * (Ghr[0, 0] * Mhr[0,0] + Mhr[0, 0] * Ghr[0,0]);
+                Gloc[0, 1] = element.lambda * (Ghr[0, 1] * Mhr[0,0] + Mhr[0, 1] * Ghr[0,0]);
+                Gloc[0, 2] = element.lambda * (Ghr[0, 0] * Mhr[0,1] + Mhr[0, 0] * Ghr[0,1]);
+                Gloc[0, 3] = element.lambda * (Ghr[0, 1] * Mhr[0, 1] + Mhr[0, 1] * Ghr[0, 1]);
                 Gloc[1, 0] = Gloc[0, 1];
-                Gloc[1, 1] = element.lambda * (Gx[1, 1] * My[0, 0] + Mx[1, 1] * Gy[0, 0]);
-                Gloc[1, 2] = element.lambda * (Gx[1, 0] * My[0, 1] + Mx[1, 0] * Gy[0, 1]);
-                Gloc[1, 3] = element.lambda * (Gx[1, 1] * My[0, 1] + Mx[1, 1] * Gy[0, 1]);
+                Gloc[1, 1] = element.lambda * (Ghr[1, 1] * Mhr[0, 0] + Mhr[1, 1] * Ghr[0, 0]);
+                Gloc[1, 2] = element.lambda * (Ghr[1, 0] * Mhr[0, 1] + Mhr[1, 0] * Ghr[0, 1]);
+                Gloc[1, 3] = element.lambda * (Ghr[1, 1] * Mhr[0, 1] + Mhr[1, 1] * Ghr[0, 1]);
                 Gloc[2, 0] = Gloc[0, 2];
                 Gloc[2, 1] = Gloc[1, 2];
-                Gloc[2, 2] = element.lambda * (Gx[0, 0] * My[1, 1] + Mx[0, 0] * Gy[1, 1]);
-                Gloc[2, 3] = element.lambda * (Gx[0, 1] * My[1, 1] + Mx[0, 1] * Gy[1, 1]);
+                Gloc[2, 2] = element.lambda * (Ghr[0, 0] * Mhr[1, 1] + Mhr[0, 0] * Ghr[1, 1]);
+                Gloc[2, 3] = element.lambda * (Ghr[0, 1] * Mhr[1, 1] + Mhr[0, 1] * Ghr[1, 1]);
                 Gloc[3, 0] = Gloc[0, 3];
                 Gloc[3, 1] = Gloc[1, 3];
                 Gloc[3, 2] = Gloc[2, 3];
-                Gloc[3,3] = element.lambda * (Gx[1, 1] * My[1, 1] + Mx[1, 1] * Gy[1, 1]);
+                Gloc[3,3] = element.lambda * (Ghr[1, 1] * Mhr[1, 1] + Mhr[1, 1] * Ghr[1, 1]);
                 Gl.Add(Gloc);
             }
 
@@ -327,25 +320,33 @@ namespace Electric
             Ml = new List <double[,] >();
             foreach (var element in elements)
             {
+                // p. 194
+                double[,] Mhr = new double[2, 2];
+                double koef2 = element.sigma * element.dz / 6;
+                Mhr[0, 0] = koef2 * (2 * element.dr + element.dz / 2);
+                Mhr[0, 1] = koef2 * (element.dr + element.dz / 2);
+                Mhr[1, 0] = koef2 * (element.dr + element.dz / 2);
+                Mhr[1, 1] = koef2 * (2 * element.dr + 3 * element.dz / 2);
+
                 // All coefficient for M
                 double koef = element.sigma - element.lambda * 1/element.r;
                 double[,] Mloc = new double[4, 4];
-                Mloc[0, 0] = element.gamma * Mx[0,0] * My[0,0] * koef;
-                Mloc[0, 1] = element.gamma * Mx[0,1] * My[0,0] * koef;
-                Mloc[0, 2] = element.gamma * Mx[0,0] * My[0,1] * koef;
-                Mloc[0, 3] = element.gamma * Mx[0, 1] * My[0, 1] * koef;
+                Mloc[0, 0] = element.gamma * Mhr[0,0] * Mhr[0,0] * koef;
+                Mloc[0, 1] = element.gamma * Mhr[0,1] * Mhr[0,0] * koef;
+                Mloc[0, 2] = element.gamma * Mhr[0,0] * Mhr[0,1] * koef;
+                Mloc[0, 3] = element.gamma * Mhr[0, 1] * Mhr[0, 1] * koef;
                 Mloc[1, 0] = Mloc[0, 1];
-                Mloc[1, 1] = element.gamma * Mx[1, 1] * My[0, 0] * koef;
-                Mloc[1, 2] = element.gamma * Mx[1, 0] * My[0, 1] * koef;
-                Mloc[1, 3] = element.gamma * Mx[1, 1] * My[0, 1] * koef;
+                Mloc[1, 1] = element.gamma * Mhr[1, 1] * Mhr[0, 0] * koef;
+                Mloc[1, 2] = element.gamma * Mhr[1, 0] * Mhr[0, 1] * koef;
+                Mloc[1, 3] = element.gamma * Mhr[1, 1] * Mhr[0, 1] * koef;
                 Mloc[2, 0] = Mloc[0, 2];
                 Mloc[2, 1] = Mloc[1, 2];
-                Mloc[2, 2] = element.gamma * Mx[0, 0] * My[1, 1] * koef;
-                Mloc[2, 3] = element.gamma * Mx[0, 1] * My[1, 1] * koef;
+                Mloc[2, 2] = element.gamma * Mhr[0, 0] * Mhr[1, 1] * koef;
+                Mloc[2, 3] = element.gamma * Mhr[0, 1] * Mhr[1, 1] * koef;
                 Mloc[3, 0] = Mloc[0, 3];
                 Mloc[3, 1] = Mloc[1, 3];
                 Mloc[3, 2] = Mloc[2, 3];
-                Mloc[3, 3] = element.gamma * Mx[1, 1] * My[1, 1] * koef;
+                Mloc[3, 3] = element.gamma * Mhr[1, 1] * Mhr[1, 1] * koef;
                 Ml.Add(Mloc);
             }
         }
@@ -541,8 +542,8 @@ namespace Electric
         {
             double rdis = Convert.ToDouble(rdischarge.Text);
             double zdis = Convert.ToDouble(zdischarge.Text);
-            int insr = Convert.ToInt32(xCrush.Text);                              // initial step r
-            int insz = Convert.ToInt32(yCrush.Text);                              // initial step z
+            double insr = Convert.ToDouble(xCrush.Text);                              // initial step r
+            double insz = Convert.ToDouble(yCrush.Text);                              // initial step z
             Point zeroPoint = new Point(Convert.ToDouble(Sourcer.Text) * kr +a,   // for drawing
                 graphImage.Height / 2 + Convert.ToDouble(Sourcez.Text) * kz);
             Point source = new Point(Convert.ToDouble(Sourcer.Text),              // for counting
@@ -591,8 +592,6 @@ namespace Electric
                     el1.p4 = p4;
                     el1.p3 = p3;
 
-                    el1.dr = p4.X - p2.X;
-                    el1.dz = p4.Y - p3.Y;
                     rd = Math.Abs(source.X - p2.X) - 0.5*el1.dr;
                     zd = Math.Abs(source.Y -  p2.Y) - 0.5*el1.dz; 
                     el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
@@ -664,8 +663,6 @@ namespace Electric
                     el1.p4 = p4;
                     el1.p3 = p3;
 
-                    el1.dr = p4.X - p2.X;
-                    el1.dz = p4.Y - p3.Y;
                     rd = Math.Abs(source.X - p2.X) - 0.5 * el1.dr;
                     zd = Math.Abs(source.Y - p2.Y) + 0.5 * el1.dz;
                     el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
@@ -737,8 +734,6 @@ namespace Electric
                     el1.p4 = p4;
                     el1.p3 = p3;
 
-                    el1.dr = p4.X - p2.X;
-                    el1.dz = p4.Y - p3.Y;
                     rd = Math.Abs(source.X - p2.X) + 0.5 * el1.dr;
                     zd = Math.Abs(source.Y - p2.Y) - 0.5 * el1.dz;
                     el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
@@ -809,8 +804,6 @@ namespace Electric
                     el1.p4 = p4;
                     el1.p3 = p3;
 
-                    el1.dr = p4.X - p2.X;
-                    el1.dz = p4.Y - p3.Y;
                     rd = Math.Abs(source.X - p2.X) + 0.5 * el1.dr;
                     zd = Math.Abs(source.Y - p2.Y) + 0.5 * el1.dz;
                     el1.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
@@ -890,6 +883,16 @@ namespace Electric
             // for matrixes
             sizei = rpartsleft + rpartsright;
             sizej = zpartsdown+zpartsup;
+            // for elements
+            foreach(var el in  elements)
+            {
+                el.dr = el.p4.X - el.p2.X;
+                el.dz = el.p4.Y - el.p3.Y;
+                // r
+                rd = p2.X + 0.5 * el.dr;
+                zd = Math.Abs(p2.Y) + 0.5 * el.dz;
+                el.r = Math.Sqrt(Math.Pow(rd, 2) + Math.Pow(zd, 2));
+            }
 
             // Paint
             GeometryDrawing myGeometryDrawing = new GeometryDrawing();
